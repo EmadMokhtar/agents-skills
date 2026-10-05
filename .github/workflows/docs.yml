@@ -1,7 +1,7 @@
 name: Docs
 
 # Needs a one-time setting: Settings -> Pages -> Source = "GitHub Actions".
-# Until then `deploy` fails, even though `build` succeeds.
+# Until then the workflow fails at the configure-pages step.
 
 on:
   push:

@@ -19,6 +19,11 @@ exclude_docs: |
   superpowers/
   adr/template.md
 
+# Rebuild when a skill or the page generator changes (mkdocs serve only).
+watch:
+  - plugins
+  - scripts
+
 theme:
   name: material
   features:

@@ -3,7 +3,8 @@
 ## Set up
 
 You need [uv](https://docs.astral.sh/uv/), [just](https://just.systems/), and Node.js 22 or
-later with Claude Code (`npm install --global @anthropic-ai/claude-code`).
+later with Claude Code (`npm install --global @anthropic-ai/claude-code@2.1.289`, the version
+CI uses).
 
 ```bash
 just install                  # every dependency group
