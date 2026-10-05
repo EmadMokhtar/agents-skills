@@ -1,0 +1,41 @@
+name: Release
+
+# release-please reads the Conventional Commits on main and keeps one release
+# pull request open per plugin. Merging that pull request bumps the plugin's
+# version in plugin.json, writes its CHANGELOG.md, tags <plugin>-v<version>,
+# and publishes a GitHub Release.
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+# Never two runs at once: they would race for the same release pull request.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    # The action acts with RELEASE_PLEASE_TOKEN, not with GITHUB_TOKEN. A pull
+    # request opened with GITHUB_TOKEN does not trigger CI, so the release pull
+    # request could never pass its required checks.
+    permissions: {}
+    steps:
+      - name: Require the release token
+        env:
+          TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then
+            echo "::error::Add the RELEASE_PLEASE_TOKEN secret. See docs/contributing.md, 'One-time repository settings'."
+            exit 1
+          fi
+      # Do not set `release-type` here: when it is set, the action ignores the
+      # config files and builds its own single-package setup.
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v5.0.0
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

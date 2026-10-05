@@ -1,0 +1,20 @@
+{
+  "name": "emad-skills",
+  "interface": {
+    "displayName": "Emad's skills"
+  },
+  "plugins": [
+    {
+      "name": "emad-coding",
+      "source": {
+        "source": "local",
+        "path": "./plugins/emad-coding"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Coding"
+    }
+  ]
+}

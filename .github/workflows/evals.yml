@@ -1,0 +1,99 @@
+name: Evals
+
+# Real evals call a model and spend quota, so they never run on their own.
+# Start them by hand, or add the `run-evals` label to a pull request.
+#
+# Security: skill-lens starts Claude Code with --dangerously-skip-permissions.
+# A pull request's SKILL.md could tell Claude to read CLAUDE_CODE_OAUTH_TOKEN
+# and send it out. Only add the label to a pull request you have read.
+# Pull requests from forks get no secrets, so for them the job fails.
+#
+# Only the act of adding the label starts a run. A later push does not, so
+# every new commit must be read again before the label is removed and re-added.
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Skill to evaluate, as <plugin>/<skill>, or 'all'"
+        required: true
+        default: all
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  pick:
+    # Run only when the label just added is `run-evals`.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.label.name == 'run-evals'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      skills: ${{ steps.pick.outputs.skills }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          # `git diff base...head` needs both sides of the history.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+        with:
+          enable-cache: true
+      - name: Pick the skills to evaluate
+        id: pick
+        env:
+          # Passed through the environment, never written into the script,
+          # so a crafted input cannot inject shell commands.
+          EVENT_NAME: ${{ github.event_name }}
+          TARGET: ${{ inputs.target }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            skills="$(uv run python scripts/changed_skills.py --target "$TARGET")"
+          else
+            skills="$(uv run python scripts/changed_skills.py --base "$BASE_SHA" --head "$HEAD_SHA")"
+          fi
+          echo "Skills to evaluate: $skills"
+          echo "skills=$skills" >> "$GITHUB_OUTPUT"
+
+  evals:
+    needs: pick
+    if: needs.pick.outputs.skills != '[]'
+    # A new push cancels the evals still running for the same skill.
+    # The group is set on this job, not on the workflow, so a run skipped by an
+    # unrelated label cannot cancel a running eval. The skill name keeps the
+    # matrix jobs from cancelling each other.
+    concurrency:
+      group: evals-${{ github.event.pull_request.number || github.run_id }}-${{ matrix.skill }}
+      cancel-in-progress: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # skill-lens takes one path per run, so each skill gets its own job.
+        skill: ${{ fromJSON(needs.pick.outputs.skills) }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+        with:
+          node-version: "22"
+      - name: Install Claude Code
+        run: npm install --global @anthropic-ai/claude-code@2.1.289
+      - name: Run the skill's evals through Claude Code
+        uses: EmadMokhtar/skill-evaluator@d825f48570916f86dcdc87cefbf2e3211683344e  # v0.20.0
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        with:
+          path: ${{ matrix.skill }}
+          runner: claude-code
+          # Set explicitly: unset would let a pull request's skill-lens.toml decide.
+          allow-scripts: false
