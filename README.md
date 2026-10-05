@@ -11,6 +11,7 @@ Cursor, and any tool that reads `SKILL.md`.
 | Plugin | What it covers |
 | --- | --- |
 | [`emad-coding`](https://emadmokhtar.github.io/agents-skills/skills/emad-coding/) | Coding workflow skills: commit messages, pull request titles, and more. |
+| [`emad-jobs`](https://emadmokhtar.github.io/agents-skills/skills/emad-jobs/) | Job search skills: find the people behind a role and reach them professionally. |
 
 ## Install
 

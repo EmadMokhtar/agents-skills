@@ -6,6 +6,8 @@
   Codex, this site, free CI checks, opt-in evals, and per-plugin releases.
 - First skill: [`conventional-commits`](skills/emad-coding/conventional-commits.md) in
   `emad-coding`.
+- [`hiring-contact-finder`](skills/emad-jobs/hiring-contact-finder.md) in `emad-jobs`: finds the
+  hiring manager or recruiter behind a job post and drafts a short, professional message.
 
 ## Next
 
