@@ -185,3 +185,22 @@ cases:
         - The reply names Kubernetes as a requirement the candidate does not meet
         - The reply suggests a concrete example that would cover the Kubernetes gap
         - The reply flags the location as a risk or as not eligible, because the role is remote within Germany only and the candidate lives in Canada
+
+  - name: uses the fallback channel when no one reaches Medium confidence
+    task: >-
+      Do not search the web; use only these facts. Job: Senior Backend Engineer on the
+      Payments team at Acme. The application form has a cover-letter field. The only
+      person I found is Tom Berg, who wrote an Acme engineering blog post in 2021 about
+      the search team. My background: 6 years of Go and Kafka pipelines. Who should I
+      contact, and draft the message.
+    tags: [contacts]
+    judge:
+      expected: >-
+        No first-choice person; the cover-letter field as the channel; a short note
+        for that field that is not addressed to Tom Berg.
+      rubric:
+        - The reply does not recommend Tom Berg as the first contact
+        - The reply rates Tom Berg at Low confidence or leaves him out
+        - The reply recommends the application's cover-letter field as the channel
+        - The draft is written for the cover-letter field and is not addressed to Tom Berg or any other named person
+        - The reply suggests searching again later

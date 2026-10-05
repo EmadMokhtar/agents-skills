@@ -1,6 +1,6 @@
 ---
 name: hiring-contact-finder
-description: Finds the hiring manager or recruiter behind a job posting from public, professional sources (not LinkedIn), picks the best professional contact channel, and drafts a short, genuine outreach message for the candidate to review and send. Use whenever someone shares a job URL (Ashby, Greenhouse, Lever, Workable, a careers page) and wants to reach a real person, find who is hiring, contact the hiring manager or recruiter, get past an automated ATS screen, write a cold message about a role, or ask "who should I email about this job?" — even if they do not use the words "hiring manager". Optional input is the candidate's resume or background.
+description: Finds the hiring manager or recruiter behind a job posting from public, professional sources (not LinkedIn), picks the best professional contact channel, and drafts a short, genuine outreach message for the candidate to review and send. Use whenever someone shares a job URL (Ashby, Greenhouse, Lever, Workable, a careers page) and wants to reach a real person, find who is hiring, contact the hiring manager or recruiter, get past an automated screen in an applicant tracking system (ATS), write a cold message about a role, or ask "who should I email about this job?" — even if they do not use the words "hiring manager". Optional input is the candidate's resume or background.
 license: MIT
 compatibility: Needs web search and the ability to fetch public web pages. Works with any agent that supports the Agent Skills format. No scripts or packages required.
 metadata:
@@ -162,6 +162,12 @@ to the recruiter, if one contacts the candidate after they apply. Do not promise
 channel you have not seen. Suggest searching again in 1–2 weeks, because new teams
 often announce hiring later.
 
+In this case there is no first-choice person, and you must not promote a
+Low-confidence person to fill the gap. In the report, "Who to contact" names the
+fallback channel instead of a person (or says no channel was found), and there is
+no backup. The draft is a short note for that channel, for example a cover-letter
+paragraph, and it is not addressed to any named person.
+
 ### 4. Pick the contact channel
 
 For each person, choose the best professional channel. Use this order of
@@ -231,6 +237,7 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 
 ### Who to contact
 - First choice: <Name> via <channel> — <why>. <"unverified" if guessed>
+  (No one at Medium or above: "<fallback channel> — no person found yet".)
 - Backup: <Name> via <channel> — <why> (only if the first channel fails)
 
 ### Draft message(s)
