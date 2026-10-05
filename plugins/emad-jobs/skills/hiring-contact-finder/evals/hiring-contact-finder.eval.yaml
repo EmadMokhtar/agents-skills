@@ -54,8 +54,9 @@ cases:
     task: >-
       Draft a direct message to Sam Lee, who posted on Bluesky "my team at Acme is hiring
       a Senior Backend Engineer (Go, Kafka)". About me: 6 years of Go, I built Kafka
-      pipelines that process 2 million events per hour, and I applied today. Write only
-      the message. Do not search the web.
+      pipelines that process 2 million events per hour, and I applied today. I want
+      this team because I enjoy making payment systems correct under heavy load.
+      Write only the message. Do not search the web.
     tags: [message]
     assertions:
       - kind: not_contains
