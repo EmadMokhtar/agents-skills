@@ -21,3 +21,11 @@ test:
 lint:
     uv run ruff check .
     uv run ruff format --check .
+
+# Check the repository layout rules
+layout:
+    uv run python scripts/check_layout.py
+
+# Validate every plugin.json against the stored Agent Plugins 1.0.0 schema
+manifests:
+    uv run check-jsonschema --schemafile schemas/agent-plugins/1.0.0/plugin.schema.json plugins/*/plugin.json
