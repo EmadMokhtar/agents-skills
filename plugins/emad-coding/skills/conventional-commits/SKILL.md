@@ -41,8 +41,10 @@ Every commit message and every pull request title follows
 3. **Description** uses the imperative mood. It starts with a lowercase letter and has no
    trailing period. Aim for 50 characters, at most 72. Write `add token refresh`, not
    `Added token refresh.`
-4. **Breaking change**: put `!` after the type or scope (`feat(api)!: ...`), and add a footer
-   `BREAKING CHANGE: <what breaks and how to migrate>`.
+4. **Breaking change**: mark it with `!` after the type or scope (`feat(api)!: ...`), with a
+   footer `BREAKING CHANGE: <what breaks and how to migrate>`, or with both. Either marker
+   alone is valid. When you write a message, use both: `!` makes the break visible in the
+   subject, and the footer says how to migrate.
 5. **Body** is optional. It explains *why* the change is needed; the diff already shows
    *what* changed. Leave one blank line after the subject and wrap at 72 characters.
 6. **Footers** come after one blank line: `Refs: #123`, `BREAKING CHANGE: ...`, and any
@@ -68,7 +70,7 @@ commit to choose the next version. A title such as `Update auth` silently breaks
 2. Pick the type. Add a scope when one area clearly owns the change.
 3. Write the description: an imperative verb first, lowercase, no period.
 4. Decide whether anything breaks for users. If it does, add `!` and a `BREAKING CHANGE:`
-   footer.
+   footer. (When you check someone else's message, either marker alone is enough.)
 5. Add a body only when the reason is not clear from the subject.
 6. Output only the commit message or title, as plain text without a code block, unless the
    user asks for an explanation.
@@ -85,4 +87,5 @@ commit to choose the next version. A title such as `Update auth` silently breaks
 ## Checking an existing message
 
 When asked whether a message or title is correct, say whether it follows the rules. If it
-does not, name each broken rule and give a corrected version.
+does not, name each broken rule and give a corrected version. A breaking change marked only
+with `!`, or only with a `BREAKING CHANGE:` footer, follows the rules.
