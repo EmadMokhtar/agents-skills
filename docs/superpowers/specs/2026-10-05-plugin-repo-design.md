@@ -150,7 +150,7 @@ The single source of truth for a plugin. Example:
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "emad-coding",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Coding workflow skills: commit messages, pull request titles, and more.",
   "author": { "name": "Emad Mokhtar", "url": "https://github.com/EmadMokhtar" },
   "homepage": "https://emadmokhtar.github.io/agents-skills/skills/emad-coding/",
@@ -349,8 +349,10 @@ The same set runs locally with `just check`. None of them calls a model or needs
 
 ### 9.3 Real evaluations (`evals.yml`) — opt-in
 
-- Triggers: manual (`workflow_dispatch`, input: a skill path or "all"), and pull requests
-  that carry the label `run-evals`.
+- Triggers: manual (`workflow_dispatch`, input: a skill path or "all"), and adding the label
+  `run-evals` to a pull request. A later push does not re-run them; the maintainer reads the
+  new commits, then removes and re-adds the label. (Changed in review: a `synchronize`
+  trigger would have exposed the token to commits pushed after the label.)
 - On a pull request, only the skills the pull request changed are evaluated. A skill counts
   as changed when any file under its directory changed, including its eval files.
 - Runs the `EmadMokhtar/skill-evaluator` action, pinned by commit SHA, with
@@ -414,7 +416,7 @@ plugins in one repository is the case release-please's manifest mode exists for.
 ## 11. Scaffolding
 
 - `just new-plugin <name>` → `scripts/new_plugin.py`: validates the name (`emad-` pattern),
-  creates `plugins/<name>/plugin.json` at `0.1.0` and `skills/`, registers it in both
+  creates `plugins/<name>/plugin.json` at `0.0.0` (not released yet) and `skills/`, registers it in both
   release-please files, runs `sync_catalogs.py`, and reminds the author to add a README line.
 - `just new-skill <plugin> <name>` → `scripts/new_skill.py`: validates the name and its
   repository-wide uniqueness, creates `SKILL.md` (frontmatter filled in, body outline),
