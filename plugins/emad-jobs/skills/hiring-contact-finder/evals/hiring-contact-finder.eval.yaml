@@ -176,11 +176,12 @@ cases:
     tags: [fit]
     judge:
       expected: >-
-        One verdict, Partial or Weak: Go and Kafka match, Kubernetes is the main gap,
-        and the location is a risk or not eligible because the role is Germany-only.
+        One verdict, Partial or Weak: Go and Kafka match, Kubernetes is missing, and
+        the location is a risk or not eligible because the role is Germany-only. The
+        location may be named as the main gap, since it can block the application.
       rubric:
         - The reply gives exactly one fit verdict, and it is Partial or Weak
         - The reply names the Go and Kafka experience as matching points
-        - The reply names Kubernetes as the main gap
+        - The reply names Kubernetes as a requirement the candidate does not meet
         - The reply suggests a concrete example that would cover the Kubernetes gap
         - The reply flags the location as a risk or as not eligible, because the role is remote within Germany only and the candidate lives in Canada

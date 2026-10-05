@@ -181,8 +181,9 @@ preference and say why you picked it:
    of them probe mail servers, which the privacy rules forbid. The evidence bar: at least two published addresses of staff who are not
    founders. One founder's address is not enough, because founders often have
    special addresses. If the bar is not met, write "email format unknown" and do
-   not guess. Do not list possible formats or example addresses for the person
-   either: a list of options is a guess too.
+   not guess. Do not write any address for the person at all, not even as an
+   example of what you will not do (such as "something like jordan@…"): every
+   written address is a guess the candidate may use.
 6. The application's own free-text or cover-letter field, if the form has one.
    It reaches the people who own the role.
 

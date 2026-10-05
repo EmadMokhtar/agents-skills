@@ -129,5 +129,5 @@ Only if no better channel exists:
   Still mark it unverified if it is older than about a year.
 - Show the evidence ("press page uses first.last@company.com") and label the result
   **unverified**. If the bar is not met, write "email format unknown", and do not
-  list possible formats or example addresses for the person.
+  write any address for the person, not even as an example of what you will not do.
 - Do not probe mail servers or use paid contact databases to confirm the address.
