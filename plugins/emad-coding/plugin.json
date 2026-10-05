@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "emad-coding",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Coding workflow skills: commit messages, pull request titles, and more.",
   "author": {
     "name": "Emad Mokhtar",
