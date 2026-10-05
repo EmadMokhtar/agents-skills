@@ -92,7 +92,9 @@ matching points. They become the core of the message.
 Always check **location and work eligibility** too: the listed countries, the
 remote policy, and relocation support. Compare them with where the candidate
 lives. A location mismatch is often the biggest risk, and it is worth raising in
-the message as a direct question.
+the message as a direct question. If you do not know where the candidate lives or
+whether they may work there, report the location as **unknown** and ask. Do not
+guess.
 
 Name the most important gap. If a key requirement is missing from the
 candidate's background, say what concrete example would cover it.
@@ -166,7 +168,8 @@ In this case there is no first-choice person, and you must not promote a
 Low-confidence person to fill the gap. In the report, "Who to contact" names the
 fallback channel instead of a person (or says no channel was found), and there is
 no backup. The draft is a short note for that channel, for example a cover-letter
-paragraph, and it is not addressed to any named person.
+paragraph, and it is not addressed to any named person. If no channel was found
+either, write no draft: say so, and suggest applying and searching again later.
 
 ### 4. Pick the contact channel
 
@@ -177,7 +180,8 @@ preference and say why you picked it:
    me at …" in the job post).
 2. A reply or DM on the public post where they announced the job.
 3. A public work contact: their professional website's contact form or listed work
-   email, or a company page that lists them.
+   email, or a company page that gives a way to contact them (a work email or a
+   form). A page that only lists the person is evidence, not a channel.
 4. A company recruiting address (for example `jobs@` or `careers@`), with the
    person's name in the subject line.
 5. A guessed work email built from the company's public email format. Show the
@@ -228,7 +232,7 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 ### Fit: Strong | Partial | Weak | Not checked
 - <reason>
 - <reason>
-- Location: <eligible / risk / not eligible> — <why>
+- Location: <eligible / risk / not eligible / unknown> — <why>
 - Main gap: <gap and the example that would cover it>
 
 ### People
@@ -237,7 +241,8 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 
 ### Who to contact
 - First choice: <Name> via <channel> — <why>. <"unverified" if guessed>
-  (No one at Medium or above: "<fallback channel> — no person found yet".)
+  (No one at Medium or above: "<fallback channel> — no person found yet", or "No
+  channel found" and no draft.)
 - Backup: <Name> via <channel> — <why> (only if the first channel fails)
 
 ### Draft message(s)

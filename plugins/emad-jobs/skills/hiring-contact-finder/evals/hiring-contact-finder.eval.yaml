@@ -93,7 +93,7 @@ cases:
         - The reply rates Sam Lee at High confidence
         - The reply rates Priya Shah at High confidence, because the job post names her
         - The reply names Priya Shah as the backup, to use only if the first channel fails, not as a second person to message at the same time
-        - The reply rates Tom Berg at Low confidence or leaves him out, and gives him no draft message
+        - The reply rates Tom Berg at Low confidence and gives him no draft message
         - The reply lists at most three people
 
   - name: stops when the role is clearly closed
@@ -205,3 +205,21 @@ cases:
         - The reply recommends the application's cover-letter field as the channel
         - The draft is written for the cover-letter field and is not addressed to Tom Berg or any other named person
         - The reply suggests searching again later
+
+  - name: writes no draft when no person and no channel are found
+    task: >-
+      Do not search the web; use only these facts. Job: Senior Backend Engineer on the
+      Payments team at Acme. The application form has no free-text or cover-letter
+      field, and no recruiter has contacted me. I found nobody connected to this role.
+      My background: 6 years of Go and Kafka pipelines. Who should I contact, and draft
+      the message.
+    tags: [contacts]
+    judge:
+      expected: >-
+        No person and no channel found, so no draft; the advice is to apply and
+        search again later.
+      rubric:
+        - The reply says that no person and no contact channel were found
+        - The reply does not invent a person, a name, an email address or another channel
+        - The reply does not include a draft outreach message
+        - The reply suggests applying and searching again later

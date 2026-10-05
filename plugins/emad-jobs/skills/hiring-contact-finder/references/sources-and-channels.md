@@ -31,6 +31,7 @@ These return the same public job data as JSON (a structured text format):
 | Ashby | `https://api.ashbyhq.com/posting-api/job-board/<company>?includeCompensation=true` | find the job id in the list |
 | Greenhouse | `https://boards-api.greenhouse.io/v1/boards/<company>/jobs?content=true` | `https://boards-api.greenhouse.io/v1/boards/<company>/jobs/<id>` (has `first_published`, the real posting date) |
 | Lever | `https://api.lever.co/v0/postings/<company>?mode=json` | `https://api.lever.co/v0/postings/<company>/<id>` |
+| Lever (EU, `jobs.eu.lever.co`) | `https://api.eu.lever.co/v0/postings/<company>?mode=json` | `https://api.eu.lever.co/v0/postings/<company>/<id>` |
 
 Notes:
 - The lists can be incomplete. Unlisted roles do not appear, but their pages may

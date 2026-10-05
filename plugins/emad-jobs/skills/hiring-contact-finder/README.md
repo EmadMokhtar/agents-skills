@@ -26,8 +26,11 @@ A short report in the chat:
 - a fit verdict (**Strong**, **Partial**, **Weak**, or **Not checked** without your
   background), including location and work eligibility, and the main gap;
 - up to three people, each with their role, a confidence level and a linked source;
-- one person to contact first, through one professional channel, and a backup;
-- a draft message, a short "before you send" checklist, and the next steps.
+- one person to contact first, through one professional channel, and a backup. If no
+  one is found with enough confidence, it names a fallback channel instead, such as
+  the application's cover-letter field, or says that no channel was found;
+- a draft message (none when no channel was found), a short "before you send"
+  checklist, and the next steps.
 
 You read it, decide, and send the message yourself.
 
