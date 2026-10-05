@@ -18,7 +18,9 @@
       "repository": "https://github.com/EmadMokhtar/agents-skills",
       "license": "MIT",
       "keywords": [
-        "coding"
+        "coding",
+        "git",
+        "conventional-commits"
       ]
     }
   ]

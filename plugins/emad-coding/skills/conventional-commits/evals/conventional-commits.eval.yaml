@@ -31,6 +31,8 @@ cases:
         value: '\A[a-z]+(\([a-z0-9._-]+\))?!: [a-z]'
       - kind: contains
         value: "BREAKING CHANGE:"
+      - kind: regex
+        value: '\A(?![^\n]*\.[ \t]*(?:\n|\Z))'
   - name: rewrites a bare summary title
     task: >-
       A pull request is titled "Update auth". It fixes a bug where expired tokens
@@ -41,3 +43,5 @@ cases:
         value: '(?m)^fix(\([a-z0-9._-]+\))?: [a-z]'
       - kind: not_contains
         value: "Update auth"
+      - kind: regex
+        value: '\A(?![^\n]*\.[ \t]*(?:\n|\Z))'
