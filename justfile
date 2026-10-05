@@ -29,3 +29,11 @@ layout:
 # Validate every plugin.json against the stored Agent Plugins 1.0.0 schema
 manifests:
     uv run check-jsonschema --schemafile schemas/agent-plugins/1.0.0/plugin.schema.json plugins/*/plugin.json
+
+# Check that the catalogs match the plugin.json files
+catalogs:
+    uv run python scripts/sync_catalogs.py --check
+
+# Rewrite the catalogs from the plugin.json files
+sync:
+    uv run python scripts/sync_catalogs.py

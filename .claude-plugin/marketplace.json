@@ -1,0 +1,9 @@
+{
+  "name": "emad-skills",
+  "description": "Emad Mokhtar's agent skills, one plugin per category.",
+  "owner": {
+    "name": "Emad Mokhtar",
+    "url": "https://github.com/EmadMokhtar"
+  },
+  "plugins": []
+}
