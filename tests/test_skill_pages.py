@@ -69,10 +69,16 @@ def test_skill_page_wraps_skill_md_in_a_longer_fence(repo):
 
 
 def test_skill_page_lists_requirements_when_present(repo):
-    _, skill = make(repo, extra={"compatibility": "Needs git.", "allowed-tools": "Bash(git:*)"})
+    _, skill = make(
+        repo,
+        extra={
+            "compatibility": "Needs git.",
+            "allowed-tools": "Bash(git:*) Bash(gh:*) Read",
+        },
+    )
     page = skill_page(skill)
     assert "- **Compatibility:** Needs git." in page
-    assert "- **Pre-approved tools:** Bash(git:*)" in page
+    assert "- **Pre-approved tools:** `Bash(git:*)` `Bash(gh:*)` `Read`" in page
 
 
 def test_plugin_page_lists_skills_and_unreleased_version(repo):

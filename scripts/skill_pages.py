@@ -57,6 +57,11 @@ def strip_title(markdown: str) -> str:
     return "".join(lines)
 
 
+def format_tools(text: str) -> str:
+    """Format space-separated tools as inline code spans."""
+    return " ".join(f"`{tool}`" for tool in str(text).split())
+
+
 def install_tabs(plugin: str, skill: str | None = None) -> str:
     npx = f"npx skills add {GITHUB_REPO}" + (f" --skill {skill}" if skill else "")
     claude_note = (
@@ -108,7 +113,11 @@ def skill_page(skill: Skill) -> str:
     ]
     if requirements:
         parts.append("## Requirements\n\n")
-        parts += [f"- **{label}:** {one_line(value)}\n" for label, value in requirements]
+        for label, value in requirements:
+            if label == "Pre-approved tools":
+                parts.append(f"- **{label}:** {format_tools(value)}\n")
+            else:
+                parts.append(f"- **{label}:** {one_line(value)}\n")
         parts.append("\n")
     parts += ["## Install\n\n", install_tabs(skill.plugin, skill.name), "\n"]
     fence = fence_for(skill.text)
