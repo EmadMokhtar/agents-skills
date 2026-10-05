@@ -1,0 +1,55 @@
+[project]
+name = "agents-skills"
+version = "0.0.0"
+description = "Tooling for the EmadMokhtar/agents-skills repository. Not published."
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv]
+# The scripts run from a checkout. Nothing is built or published.
+package = false
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1",
+    "ruff>=0.16",
+    "pyyaml>=6.0",
+    "jsonschema>=4.26",
+    "check-jsonschema>=0.38.2",
+    # This package installs a command named `agentskills`, not `skills-ref`.
+    "skills-ref==0.1.1",
+    # Pinned exactly: a 0.x minor release may change behaviour, and the Evals
+    # workflow pins the skill-evaluator action at the same version.
+    "skill-lens==0.20.0",
+    "pre-commit>=4.6",
+    "actionlint-py>=1.7.12",
+]
+docs = [
+    # MkDocs 2.0 removes the plugin system that gen-files and literate-nav use.
+    "mkdocs>=1.6,<2",
+    "mkdocs-material>=9.7,<10",
+    "mkdocs-gen-files>=0.6.1",
+    "mkdocs-literate-nav>=0.6.3",
+    "pyyaml>=6.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# The scripts are plain modules in scripts/, not an installed package.
+pythonpath = ["scripts"]
+
+[tool.ruff]
+line-length = 100
+src = ["scripts", "tests"]
+# Ruff 0.16 also formats Python code blocks inside Markdown files by default.
+# The docs hold plan and example code, so only .py files are checked.
+extend-exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert (S101) and run the CLI tools with a fixed argument list (S603, S607).
+"tests/**" = ["S101", "S603", "S607"]
+# Scripts run git with a fixed argument list and no shell (S603, S607).
+"scripts/**" = ["S603", "S607"]
