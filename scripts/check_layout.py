@@ -19,8 +19,11 @@ from jsonschema import Draft202012Validator
 
 from repo_model import (
     PLUGIN_NAME_RE,
+    RELEASE_CONFIG,
+    RELEASE_MANIFEST,
     REPO_ROOT,
     SCHEMA_PATH,
+    VERSION_UPDATER,
     RepoError,
     plugin_dirs,
     read_manifest,
@@ -38,6 +41,48 @@ def _rel(path: Path, root: Path) -> str:
     return path.relative_to(root).as_posix()
 
 
+def check_release_config(root: Path) -> list[str]:
+    """Every plugin is a release-please package whose version matches plugin.json."""
+    try:
+        config = json.loads((root / RELEASE_CONFIG).read_text(encoding="utf-8"))
+        versions = json.loads((root / RELEASE_MANIFEST).read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError) as exc:
+        return [f"{RELEASE_CONFIG} / {RELEASE_MANIFEST}: cannot read: {exc}"]
+    packages = config.get("packages", {})
+    problems: list[str] = []
+    on_disk: set[str] = set()
+    for plugin_dir in plugin_dirs(root):
+        key = f"plugins/{plugin_dir.name}"
+        on_disk.add(key)
+        package = packages.get(key)
+        if package is None:
+            problems.append(
+                f"{RELEASE_CONFIG}: {key} is not registered; `just new-plugin` does this"
+            )
+        else:
+            if package.get("component") != plugin_dir.name:
+                problems.append(f"{RELEASE_CONFIG}: {key} must have component {plugin_dir.name!r}")
+            if VERSION_UPDATER not in package.get("extra-files", []):
+                problems.append(
+                    f"{RELEASE_CONFIG}: {key} must update plugin.json with {VERSION_UPDATER}"
+                )
+        if key not in versions:
+            problems.append(f"{RELEASE_MANIFEST}: {key} has no version")
+            continue
+        try:
+            plugin_version = read_manifest(plugin_dir).get("version")
+        except RepoError:
+            continue  # check_plugin already reports this
+        if versions[key] != plugin_version:
+            problems.append(
+                f"{RELEASE_MANIFEST}: {key} is {versions[key]!r} but plugin.json says "
+                f"{plugin_version!r}"
+            )
+    for key in sorted((set(packages) | set(versions)) - on_disk):
+        problems.append(f"release-please: {key} is registered but plugins/ has no such folder")
+    return problems
+
+
 def find_problems(root: Path = REPO_ROOT, schema_path: Path = SCHEMA_PATH) -> list[str]:
     validator = Draft202012Validator(json.loads(schema_path.read_text(encoding="utf-8")))
     problems: list[str] = []
@@ -47,6 +92,7 @@ def find_problems(root: Path = REPO_ROOT, schema_path: Path = SCHEMA_PATH) -> li
         for skill_dir in skill_dirs(plugin_dir):
             problems += check_skill(skill_dir, root, owners)
     problems += check_skill_file_locations(root)
+    problems += check_release_config(root)
     return problems
 
 

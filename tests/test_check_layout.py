@@ -161,3 +161,49 @@ def test_dotfiles_are_not_problems(valid):
     (valid.root / "plugins" / ".DS_Store").write_text("x")
     (valid.root / "plugins" / "emad-alpha" / "skills" / ".DS_Store").write_text("x")
     assert find_problems(valid.root) == []
+
+
+def edit_json(path, change):
+    data = json.loads(path.read_text(encoding="utf-8"))
+    change(data)
+    path.write_text(json.dumps(data), encoding="utf-8")
+
+
+def test_unregistered_plugin_is_reported(valid):
+    edit_json(valid.root / "release-please-config.json", lambda d: d["packages"].clear())
+    edit_json(valid.root / ".release-please-manifest.json", lambda d: d.clear())
+    found = find_problems(valid.root)
+    assert problems_mentioning(found, "plugins/emad-alpha is not registered")
+    assert problems_mentioning(found, "plugins/emad-alpha has no version")
+
+
+def test_release_component_must_be_the_plugin_name(valid):
+    edit_json(
+        valid.root / "release-please-config.json",
+        lambda d: d["packages"]["plugins/emad-alpha"].update(component="alpha"),
+    )
+    assert problems_mentioning(find_problems(valid.root), "must have component 'emad-alpha'")
+
+
+def test_release_package_must_bump_plugin_json(valid):
+    edit_json(
+        valid.root / "release-please-config.json",
+        lambda d: d["packages"]["plugins/emad-alpha"].pop("extra-files"),
+    )
+    assert problems_mentioning(find_problems(valid.root), "must update plugin.json")
+
+
+def test_release_manifest_version_must_match_plugin_json(valid):
+    edit_json(
+        valid.root / ".release-please-manifest.json",
+        lambda d: d.update({"plugins/emad-alpha": "9.9.9"}),
+    )
+    assert problems_mentioning(find_problems(valid.root), "is '9.9.9' but plugin.json says '0.0.0'")
+
+
+def test_registration_without_a_folder_is_reported(valid):
+    edit_json(
+        valid.root / "release-please-config.json",
+        lambda d: d["packages"].update({"plugins/emad-gone": {"component": "emad-gone"}}),
+    )
+    assert problems_mentioning(find_problems(valid.root), "plugins/emad-gone is registered")
