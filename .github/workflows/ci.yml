@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
   pull_request:
+    # "edited" re-checks the pull request title after someone changes it.
+    types: [opened, edited, synchronize, reopened]
 
 # Nothing at the workflow level. Each job asks for exactly what it uses.
 permissions: {}
