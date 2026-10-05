@@ -224,6 +224,10 @@ to one it reads as a second ask.
 If the candidate's background is missing (see Inputs), write the draft with clear
 placeholders such as `[one concrete result from your work that matches X]`.
 
+The draft never claims anything about the candidate that they did not say, such as
+where they live, their right to work, or when they can start. Use a placeholder
+(for example `[your work authorization]`) or leave the point out.
+
 ### 6. Report back
 
 Use this structure in the chat:

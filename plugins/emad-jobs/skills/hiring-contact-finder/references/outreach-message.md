@@ -16,7 +16,9 @@ application. It is not a cover letter.
   sense?" Write it as one direct question. Do not stack several requests, and do
   not add offers such as "happy to share more": an offer reads as a second ask.
 - **Honest.** Say "I applied today" only if it is true. If the candidate has not
-  applied yet, write "I'm applying today" and remind them to do it.
+  applied yet, write "I'm applying today" and remind them to do it. Never state the
+  candidate's location, right to work, or start date unless they told you; use a
+  placeholder instead.
 - **Short.** A DM is 3–5 sentences. An email is up to about 150 words.
 - **No pressure, no flattery.** Do not mention the ATS or AI filters. Do not
   complain about hiring processes. Do not use urgency tricks.
