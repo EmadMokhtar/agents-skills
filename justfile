@@ -83,3 +83,14 @@ docs-build:
 
 # Run every free check, exactly as CI does
 check: lint test layout manifests skills catalogs evals-list claude-validate docs-build
+
+# Run one skill's evals for real through your installed Claude Code (uses your quota)
+eval target:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="{{target}}"
+    if [[ "$target" != */* ]]; then
+        echo "usage: just eval <plugin>/<skill>, for example emad-coding/conventional-commits" >&2
+        exit 2
+    fi
+    uv run skill-lens run "plugins/${target%%/*}/skills/${target#*/}"

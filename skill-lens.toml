@@ -1,0 +1,16 @@
+# skill-lens settings for this repository. API keys never go in this file.
+# `just eval` and the Evals workflow both run from the repository root,
+# which is where skill-lens looks for this file.
+
+# Run every case through the installed Claude Code. It uses its own login,
+# so no API key is needed.
+default_runner = "claude-code"
+
+# Grade `judge:` rubric cases through Claude Code too.
+judge = "claude-code"
+
+# Every case must pass.
+min_pass_rate = 1.0
+
+# Never run scripts a skill bundles: a SKILL.md under test is unvetted code.
+allow_scripts = false
