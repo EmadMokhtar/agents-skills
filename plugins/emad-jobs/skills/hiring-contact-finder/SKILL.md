@@ -188,6 +188,11 @@ Adjust the length to the channel: a DM is 3–5 sentences, an email is up to abo
 150 words. Write a draft for the first-choice person. Write a second draft only
 for the backup person, and adapt it to what that person does.
 
+Every draft ends with exactly one request, written as a direct question, for
+example "Could you take a look at my application?". Do not add offers such as "I
+can send a write-up" or "happy to share more": an offer is not a request, and next
+to one it reads as a second ask.
+
 If the candidate's background is missing (see Inputs), write the draft with clear
 placeholders such as `[one concrete result from your work that matches X]`.
 
