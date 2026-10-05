@@ -17,10 +17,11 @@ install:
 test:
     uv run pytest
 
-# Lint and format-check the Python code
+# Lint and format-check the Python code, and lint the workflows
 lint:
     uv run ruff check .
     uv run ruff format --check .
+    uv run actionlint
 
 # Check the repository layout rules
 layout:
@@ -79,3 +80,6 @@ docs:
 # Build the site exactly as CI does; any warning fails the build
 docs-build:
     uv run mkdocs build --strict
+
+# Run every free check, exactly as CI does
+check: lint test layout manifests skills catalogs evals-list claude-validate docs-build

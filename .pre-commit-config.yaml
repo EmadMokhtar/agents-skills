@@ -1,0 +1,26 @@
+# Quick checks before each commit. Install once per clone:
+#   uv run pre-commit install
+# `just check` runs the full set.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.10
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: sync-catalogs
+        name: catalogs match plugins/*/plugin.json
+        entry: uv run python scripts/sync_catalogs.py --check
+        language: system
+        pass_filenames: false
+        files: (^plugins/[^/]+/plugin\.json$|marketplace\.json$)
