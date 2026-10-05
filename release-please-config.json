@@ -16,6 +16,16 @@
           "jsonpath": "$.version"
         }
       ]
+    },
+    "plugins/emad-jobs": {
+      "component": "emad-jobs",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
     }
   }
 }

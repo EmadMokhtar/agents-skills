@@ -22,6 +22,23 @@
         "git",
         "conventional-commits"
       ]
+    },
+    {
+      "name": "emad-jobs",
+      "source": "./plugins/emad-jobs",
+      "description": "Job search skills: find the people behind a role and reach them professionally.",
+      "author": {
+        "name": "Emad Mokhtar",
+        "url": "https://github.com/EmadMokhtar"
+      },
+      "homepage": "https://emadmokhtar.github.io/agents-skills/skills/emad-jobs/",
+      "repository": "https://github.com/EmadMokhtar/agents-skills",
+      "license": "MIT",
+      "keywords": [
+        "jobs",
+        "job-search",
+        "outreach"
+      ]
     }
   ]
 }
