@@ -1,0 +1,43 @@
+# skill-lens eval cases for conventional-commits.
+# Run for real with: just eval emad-coding/conventional-commits
+cases:
+  - name: feature commit uses the feat type and a lowercase subject
+    task: >-
+      Write the commit message for this change. Output only the commit message.
+      Change: adds a new POST /login endpoint that issues session tokens.
+    tags: [format]
+    assertions:
+      - kind: regex
+        value: '\Afeat(\([a-z0-9._-]+\))?: [a-z]'
+      - kind: regex
+        value: '\A(?![^\n]*\.[ \t]*(?:\n|\Z))'
+  - name: bug fix commit uses the fix type
+    task: >-
+      Write the commit message for this change. Output only the commit message.
+      Change: token refresh accepted expired tokens; now it rejects them.
+    tags: [format]
+    assertions:
+      - kind: regex
+        value: '\Afix(\([a-z0-9._-]+\))?: [a-z]'
+      - kind: regex
+        value: '\A(?![^\n]*\.[ \t]*(?:\n|\Z))'
+  - name: breaking change has an exclamation mark and a footer
+    task: >-
+      Write the commit message for this change. Output only the commit message.
+      Change: removes the /v1 API endpoints; clients must move to /v2.
+    tags: [breaking]
+    assertions:
+      - kind: regex
+        value: '\A[a-z]+(\([a-z0-9._-]+\))?!: [a-z]'
+      - kind: contains
+        value: "BREAKING CHANGE:"
+  - name: rewrites a bare summary title
+    task: >-
+      A pull request is titled "Update auth". It fixes a bug where expired tokens
+      were accepted on refresh. Give only the corrected pull request title.
+    tags: [review]
+    assertions:
+      - kind: regex
+        value: '(?m)^fix(\([a-z0-9._-]+\))?: [a-z]'
+      - kind: not_contains
+        value: "Update auth"
