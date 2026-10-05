@@ -5,7 +5,9 @@ import yaml
 
 from repo_model import REPO_ROOT
 
-WORKFLOWS = sorted((REPO_ROOT / ".github" / "workflows").glob("*.yml"))
+WORKFLOW_DIR = REPO_ROOT / ".github" / "workflows"
+# GitHub runs workflows ending in .yml and .yaml, so both must be checked.
+WORKFLOWS = sorted([*WORKFLOW_DIR.glob("*.yml"), *WORKFLOW_DIR.glob("*.yaml")])
 USES = re.compile(r"^\s*(?:-\s*)?uses:\s*(\S+)(.*)$", re.MULTILINE)
 PINNED = re.compile(r"^[\w.-]+/[\w./-]+@[0-9a-f]{40}$")
 

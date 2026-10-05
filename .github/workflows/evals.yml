@@ -7,6 +7,9 @@ name: Evals
 # A pull request's SKILL.md could tell Claude to read CLAUDE_CODE_OAUTH_TOKEN
 # and send it out. Only add the label to a pull request you have read.
 # Pull requests from forks get no secrets, so for them the job fails.
+#
+# Only the act of adding the label starts a run. A later push does not, so
+# every new commit must be read again before the label is removed and re-added.
 
 on:
   workflow_dispatch:
@@ -16,17 +19,16 @@ on:
         required: true
         default: all
   pull_request:
-    types: [labeled, synchronize]
+    types: [labeled]
 
 permissions: {}
 
 jobs:
   pick:
-    # On a `labeled` event, run only when the label just added is `run-evals`.
+    # Run only when the label just added is `run-evals`.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (contains(github.event.pull_request.labels.*.name, 'run-evals') &&
-       (github.event.action != 'labeled' || github.event.label.name == 'run-evals'))
+      github.event.label.name == 'run-evals'
     runs-on: ubuntu-latest
     permissions:
       contents: read

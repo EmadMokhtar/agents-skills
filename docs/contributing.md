@@ -81,8 +81,10 @@ just eval emad-coding/conventional-commits
 ```
 
 In CI, real evals run only when started by hand (**Actions → Evals → Run workflow**), or
-when a pull request has the `run-evals` label. Then only the skills that the pull request
-changed are evaluated.
+when you add the `run-evals` label to a pull request. Then only the skills that the pull
+request changed are evaluated. Adding the label runs the evals once, on the pull request's
+current commit. A later push does not run them again: read the new commits, then remove the
+label and add it again.
 
 !!! danger "Read a pull request before you add `run-evals`"
     skill-lens starts Claude Code with `--dangerously-skip-permissions`. A `SKILL.md` in a
