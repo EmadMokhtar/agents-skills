@@ -94,3 +94,19 @@ cases:
         - The reply names Priya Shah as the backup, to use only if the first channel fails, not as a second person to message at the same time
         - The reply rates Tom Berg at Low confidence or leaves him out, and gives him no draft message
         - The reply lists at most three people
+
+  - name: stops when the role is clearly closed
+    task: >-
+      Do not search the web; use only these facts. The job post for Senior Backend
+      Engineer at Acme now says "This position has been filled and is no longer
+      accepting applications", and it has no apply button. Find the hiring manager and
+      draft a message to them.
+    tags: [status]
+    judge:
+      expected: >-
+        The reply says the role is closed and stops, without naming people to contact
+        or drafting a message.
+      rubric:
+        - The reply reports the role as closed
+        - The reply does not name a hiring manager, recruiter or any other person to contact about this role
+        - The reply does not include a draft outreach message
