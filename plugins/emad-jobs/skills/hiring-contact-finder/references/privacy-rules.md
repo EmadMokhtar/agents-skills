@@ -56,8 +56,9 @@ These rules apply every time the skill runs. They exist for two reasons:
 
 - One message per person per role. One follow-up after about 7 working days. Then
   stop.
-- Do not contact more than two people at the same company for the same role at the
-  same time. Several people get the same message and compare notes.
+- Contact one person first. Contact the backup person only if the first channel
+  fails. Never message two people at the same company about the same role at the
+  same time: they compare notes, and it reads as mass messaging.
 - If someone replies "no" or "please apply through the portal", respect it.
 
 ## When the user asks for more

@@ -14,16 +14,17 @@ with** a normal application, not instead of one.
 - You ask how to reach the hiring manager or recruiter for a role.
 - You ask for a short cold message about a role.
 
-You can also give it your resume or a few lines about your experience. Without them, the
-draft message uses clear `[placeholders]` instead of invented details.
+You can also give it your resume or a few lines about your experience. If you do not, it
+asks once. If you still give none, it marks the fit as **Not checked**, and the draft
+message uses clear `[placeholders]` instead of invented details.
 
 ## What you get
 
 A short report in the chat:
 
 - the role's status, key facts, and a link to apply;
-- a fit verdict (**Strong**, **Partial** or **Weak**), including location and work
-  eligibility, and the main gap;
+- a fit verdict (**Strong**, **Partial**, **Weak**, or **Not checked** without your
+  background), including location and work eligibility, and the main gap;
 - up to three people, each with their role, a confidence level and a linked source;
 - one person to contact first, through one professional channel, and a backup;
 - a draft message, a short "before you send" checklist, and the next steps.

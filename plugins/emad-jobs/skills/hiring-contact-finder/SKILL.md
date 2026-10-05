@@ -23,8 +23,10 @@ system — the hiring software) to move the candidate forward.
 
 - **Job URL** (required).
 - **Resume or background** (optional). It can be a file, pasted text, or what you
-  already know about the user. If there is nothing, ask for 2–3 lines about their
-  experience before you write the message. You can still do the research first.
+  already know about the user. If there is nothing, ask once for 2–3 lines about
+  their experience, and do the research while you wait. If the user does not give
+  them, or asks you to go ahead without them, continue: report the fit as **Not
+  checked** (step 2) and write the draft with clear placeholders (step 5).
 
 ## Privacy rules (read before searching)
 
@@ -80,6 +82,10 @@ candidate's background, say what concrete example would cover it.
 
 If the fit is Weak, say so honestly and ask whether to continue. A message about a
 poor fit uses up the candidate's one chance with that person.
+
+If there is no background (see Inputs), do not guess a verdict. Report the fit as
+**Not checked**, and still list the key requirements and the location rules so the
+candidate can judge the fit themselves.
 
 ### 3. Find the people
 
@@ -173,8 +179,8 @@ Adjust the length to the channel: a DM is 3–5 sentences, an email is up to abo
 150 words. Write a draft for the first-choice person. Write a second draft only
 for the backup person, and adapt it to what that person does.
 
-If the candidate's background is missing, write the draft with clear placeholders
-such as `[one concrete result from your work that matches X]`.
+If the candidate's background is missing (see Inputs), write the draft with clear
+placeholders such as `[one concrete result from your work that matches X]`.
 
 ### 6. Report back
 
@@ -186,7 +192,7 @@ Status: open / open (unlisted) / closed / unclear (posted <date>)
 Apply link: <url>
 Key facts: <team> · <location and remote policy> · <pay, if listed>
 
-### Fit: Strong | Partial | Weak
+### Fit: Strong | Partial | Weak | Not checked
 - <reason>
 - <reason>
 - Location: <eligible / risk / not eligible> — <why>

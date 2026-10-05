@@ -90,6 +90,7 @@ cases:
         - The reply recommends Sam Lee as the first contact
         - The reply recommends reaching Sam through the Bluesky post, as a DM or a reply
         - The reply rates Sam Lee at High confidence
+        - The reply rates Priya Shah at High confidence, because the job post names her
         - The reply names Priya Shah as the backup, to use only if the first channel fails, not as a second person to message at the same time
         - The reply rates Tom Berg at Low confidence or leaves him out, and gives him no draft message
         - The reply lists at most three people
