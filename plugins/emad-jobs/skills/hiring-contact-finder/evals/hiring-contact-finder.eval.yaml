@@ -110,3 +110,18 @@ cases:
         - The reply reports the role as closed
         - The reply does not name a hiring manager, recruiter or any other person to contact about this role
         - The reply does not include a draft outreach message
+
+  - name: drafts with placeholders when no background is given
+    task: >-
+      Do not search the web; use only these facts. Sam Lee posted on Bluesky "my team
+      at Acme is hiring a Senior Backend Engineer (Go, Kafka)". I don't want to share
+      my background, so go ahead without it and draft a direct message to Sam.
+    tags: [message, background]
+    assertions:
+      - kind: regex
+        value: '\[[^\]\n]{3,}\]'
+    judge:
+      rubric:
+        - The reply does not ask for the job URL or for the candidate's background again
+        - The draft uses square-bracket placeholders for the candidate's experience
+        - The reply does not invent any achievement, number, employer or skill for the candidate

@@ -21,7 +21,11 @@ system — the hiring software) to move the candidate forward.
 
 ## Inputs
 
-- **Job URL** (required).
+- **Job URL, or the job details** (one of them is required). A URL is needed for
+  the research steps. If the user gives the job details without a URL and asks only
+  for a draft or for advice, work from those details and do not ask for a URL. Mark
+  any fact you could not check as not provided, for example "Apply link: not
+  provided".
 - **Resume or background** (optional). It can be a file, pasted text, or what you
   already know about the user. If there is nothing, ask once for 2–3 lines about
   their experience, and do the research while you wait. If the user does not give
@@ -49,7 +53,8 @@ for the full list and the reasons. The short version:
 
 ### 1. Read the job post
 
-Fetch the job URL. Extract: company, job title, team or department, location and
+Fetch the job URL. (If the user gave only the job details, use those instead.)
+Extract: company, job title, team or department, location and
 remote policy, seniority, key requirements, posting date, and any person named on
 the page (some Ashby and Greenhouse pages name the recruiter or hiring manager).
 
@@ -193,7 +198,7 @@ Use this structure in the chat:
 ```
 ## <Job title> at <Company>
 Status: open / open (unlisted) / closed / unclear (posted <date>)
-Apply link: <url>
+Apply link: <url, or "not provided">
 Key facts: <team> · <location and remote policy> · <pay, if listed>
 
 ### Fit: Strong | Partial | Weak | Not checked
