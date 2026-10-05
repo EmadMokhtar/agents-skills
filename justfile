@@ -71,3 +71,11 @@ claude-validate:
         claude plugin validate --strict "$dir"
         claude plugin validate --strict "${dir}plugin.json"
     done
+
+# Serve the site on http://127.0.0.1:8000, rebuilding on save
+docs:
+    uv run mkdocs serve
+
+# Build the site exactly as CI does; any warning fails the build
+docs-build:
+    uv run mkdocs build --strict
