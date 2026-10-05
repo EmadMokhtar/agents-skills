@@ -33,8 +33,14 @@ These return the same public job data as JSON (a structured text format):
 | Lever | `https://api.lever.co/v0/postings/<company>?mode=json` | `https://api.lever.co/v0/postings/<company>/<id>` |
 
 Notes:
-- The lists can be incomplete. Unlisted roles do not appear, but their pages still
-  load. Report such a role as "open (unlisted)".
+- The lists can be incomplete. Unlisted roles do not appear, but their pages may
+  still load. A loading page alone does not prove the role is open, because closed
+  postings often stay reachable. Report "open (unlisted)" only when the page still
+  shows a working way to apply (an apply button or form). If the page shows a
+  closure notice, report "closed". If you cannot tell, report "unclear".
+- Boards on Greenhouse's EU host (`job-boards.eu.greenhouse.io`) may not appear in
+  the API above. If the API returns nothing for them, read the page itself or use
+  job aggregators.
 - A summarised page can show a wrong date. Prefer the API's date field.
 - If the API also fails, search for the exact job title on job aggregators (sites
   that copy job posts, such as startup.jobs or builtin). They often show the full

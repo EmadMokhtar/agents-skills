@@ -67,3 +67,25 @@ cases:
         - The message does not invent achievements, numbers or employers that the task did not give
         - The message does not mention applicant tracking systems or AI filters
         - The message avoids buzzwords such as passionate, rockstar, synergy and leverage
+
+  - name: picks one first contact, a backup, and confidence levels
+    task: >-
+      Do not search the web; use only these facts. Job: Senior Backend Engineer on the
+      Payments team at Acme, posted last week. People I found: (1) Sam Lee posted on
+      Bluesky two weeks ago "my Payments team at Acme is hiring a Senior Backend
+      Engineer, DM me". (2) Priya Shah is a technical recruiter at Acme, named at the
+      bottom of the job post. (3) Tom Berg wrote an Acme engineering blog post in 2021
+      about the search team. Who should I contact first, through which channel, and who
+      is the backup? Rate your confidence in each person.
+    tags: [contacts]
+    judge:
+      expected: >-
+        Sam Lee first, through a DM or a reply on the Bluesky post; Priya Shah as the
+        backup; Tom Berg at Low confidence with no draft message.
+      rubric:
+        - The reply recommends Sam Lee as the first contact
+        - The reply recommends reaching Sam through the Bluesky post, as a DM or a reply
+        - The reply rates Sam Lee at High confidence
+        - The reply names Priya Shah as the backup, to use only if the first channel fails, not as a second person to message at the same time
+        - The reply rates Tom Berg at Low confidence or leaves him out, and gives him no draft message
+        - The reply lists at most three people

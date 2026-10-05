@@ -45,9 +45,12 @@ These rules apply every time the skill runs. They exist for two reasons:
 - Do not save information about the people outside the chat report, unless the
   user asks for a tracker. A tracker holds only: name, role, company, channel,
   date contacted, follow-up date.
-- In the EU and UK, GDPR (General Data Protection Regulation) applies to personal
-  data. One relevant professional message is usually acceptable. Mass messages and
-  stored profiles are not. This is general information, not legal advice.
+- In the EU and UK, data protection law (GDPR, the General Data Protection
+  Regulation) can apply to personal data, including work contact details. Whether
+  a given message or record is allowed depends on the context. So keep to the
+  minimum: send one relevant message, do not build or store profiles, and keep a
+  tracker only if the user asks for one. This is general information, not legal
+  advice.
 
 ## Contact limits
 

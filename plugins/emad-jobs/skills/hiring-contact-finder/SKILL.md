@@ -55,8 +55,11 @@ Many ATS pages are built with JavaScript, so a plain page fetch may return only
 the title. If that happens, use the ATS's public JSON API (a machine-readable
 version of the job data) or search for the exact job title on job aggregator
 sites. [references/sources-and-channels.md](references/sources-and-channels.md)
-lists the API address for each ATS. These APIs can miss unlisted roles. A role
-that is missing from the API but whose page still loads is "open (unlisted)".
+lists the API address for each ATS. These APIs can miss unlisted roles. A page that
+loads does not prove the role is open: closed postings often stay reachable. Report
+"open (unlisted)" only when the role is missing from the API and its page still
+shows a working way to apply (an apply button or form). If you cannot tell whether
+applications are still accepted, report "unclear".
 
 If the role is clearly closed, say so and stop. Searching for contacts for a
 closed role wastes everyone's time.
@@ -126,10 +129,11 @@ Some situations come up often:
 - **Undated sources.** Mark them "undated" in the evidence column. They lower
   confidence, because people change roles.
 
-**Fallback when no one reaches Medium.** Use the channels that always exist: the
-application's own free-text or cover-letter field, and a reply to the recruiter
-if one contacts the candidate after they apply. Suggest searching again in 1–2
-weeks, because new teams often announce hiring later.
+**Fallback when no one reaches Medium.** Use the channels that exist for this role:
+the application's free-text or cover-letter field, if the form has one, and a reply
+to the recruiter, if one contacts the candidate after they apply. Do not promise a
+channel you have not seen. Suggest searching again in 1–2 weeks, because new teams
+often announce hiring later.
 
 ### 4. Pick the contact channel
 
@@ -145,13 +149,14 @@ preference and say why you picked it:
    person's name in the subject line.
 5. A guessed work email built from the company's public email format. Show the
    evidence for the format and mark it **unverified**. Suggest the candidate
-   checks it before sending (for example with an email-verification service).
-   The evidence bar: at least two published addresses of staff who are not
+   confirms it from a first-party source (for example a page where the person
+   published it) before sending. Do not suggest email-verification services: many
+   of them probe mail servers, which the privacy rules forbid. The evidence bar: at least two published addresses of staff who are not
    founders. One founder's address is not enough, because founders often have
    special addresses. If the bar is not met, write "email format unknown" and do
    not guess.
-6. The application's own free-text or cover-letter field. This always reaches
-   the people who own the role.
+6. The application's own free-text or cover-letter field, if the form has one.
+   It reaches the people who own the role.
 
 Never use a personal channel, even if you happen to see one.
 
@@ -200,7 +205,7 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 
 ### Before you send
 - [ ] Replace every [placeholder] with a real detail.
-- [ ] Verify any "unverified" address.
+- [ ] Confirm any "unverified" address from a first-party source.
 - [ ] Apply first, so "I applied today" is true.
 
 ### Next steps
