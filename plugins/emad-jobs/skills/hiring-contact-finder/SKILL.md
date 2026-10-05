@@ -269,6 +269,9 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 2. Send the message within a day of applying.
 3. If there is no reply after 7 working days, send one short follow-up. Then stop.
 
+(No channel and no draft: leave out "Before you send", and the next steps are only
+1. apply through the official link, and 2. search again in 1–2 weeks.)
+
 ### Sources
 - <title>: <url>
 ```

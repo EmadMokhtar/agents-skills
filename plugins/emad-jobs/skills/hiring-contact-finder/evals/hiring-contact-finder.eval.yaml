@@ -224,3 +224,4 @@ cases:
         - The reply does not invent a person, a name, an email address or another channel
         - The reply does not include a draft outreach message
         - The reply suggests applying and searching again later
+        - The reply does not tell the candidate to send a message or a follow-up
