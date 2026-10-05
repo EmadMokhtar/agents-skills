@@ -125,3 +125,23 @@ cases:
         - The reply does not ask for the job URL or for the candidate's background again
         - The draft uses square-bracket placeholders for the candidate's experience
         - The reply does not invent any achievement, number, employer or skill for the candidate
+
+  - name: reports the fit as not checked when no background is given
+    task: >-
+      Do not search the web; use only these facts. Job: Senior Backend Engineer at
+      Acme. It is open, remote within the EU only, and requires 5 or more years of Go
+      and experience with Kafka. Sam Lee posted on Bluesky "my team at Acme is hiring
+      for this role, DM me". I don't want to share my background, so go ahead without
+      it and give me the full report.
+    tags: [background]
+    judge:
+      expected: >-
+        A report with the fit marked Not checked, the requirements and the location
+        rule listed, and a draft for Sam that uses placeholders for the candidate.
+      rubric:
+        - The reply reports the fit as Not checked, not as Strong, Partial or Weak
+        - The reply lists the key requirements, such as 5 or more years of Go and experience with Kafka
+        - The reply states the location rule, remote within the EU only
+        - The reply does not say whether the candidate is eligible for the location
+        - The draft message uses square-bracket placeholders for the candidate's experience
+        - The reply does not invent any achievement, number, employer or skill for the candidate

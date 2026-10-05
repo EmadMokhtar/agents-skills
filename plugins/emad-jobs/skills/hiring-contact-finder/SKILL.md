@@ -238,6 +238,10 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 - <title>: <url>
 ```
 
+When the fit is **Not checked**, replace the reasons, the location verdict and the
+main gap with the key requirements and the location rules. Without the candidate's
+background you cannot judge eligibility or gaps, so do not guess them.
+
 Keep the report short. Do not include anything about a person's private life.
 Only include facts you found and can link to.
 
