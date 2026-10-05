@@ -1,7 +1,7 @@
 {
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "emad-jobs",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Job search skills: find the people behind a role and reach them professionally.",
   "author": {
     "name": "Emad Mokhtar",
