@@ -37,3 +37,11 @@ catalogs:
 # Rewrite the catalogs from the plugin.json files
 sync:
     uv run python scripts/sync_catalogs.py
+
+# Create a plugin: just new-plugin emad-jobs "Job search skills."
+new-plugin name description:
+    uv run python scripts/new_plugin.py "{{name}}" --description "{{description}}"
+
+# Create a skill in a plugin: just new-skill emad-jobs cover-letter
+new-skill plugin name:
+    uv run python scripts/new_skill.py "{{plugin}}" "{{name}}"
