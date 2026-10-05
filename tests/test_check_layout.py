@@ -207,3 +207,15 @@ def test_registration_without_a_folder_is_reported(valid):
         lambda d: d["packages"].update({"plugins/emad-gone": {"component": "emad-gone"}}),
     )
     assert problems_mentioning(find_problems(valid.root), "plugins/emad-gone is registered")
+
+
+def test_plugin_missing_from_readme_is_reported(valid):
+    (valid.root / "README.md").write_text("# agents-skills\n", encoding="utf-8")
+    assert "README.md: plugin `emad-alpha` is missing from the plugin list" in find_problems(
+        valid.root
+    )
+
+
+def test_missing_readme_is_reported(valid):
+    (valid.root / "README.md").unlink()
+    assert "README.md: missing" in find_problems(valid.root)

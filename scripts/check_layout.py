@@ -93,6 +93,7 @@ def find_problems(root: Path = REPO_ROOT, schema_path: Path = SCHEMA_PATH) -> li
             problems += check_skill(skill_dir, root, owners)
     problems += check_skill_file_locations(root)
     problems += check_release_config(root)
+    problems += check_readme(root)
     return problems
 
 
@@ -154,6 +155,19 @@ def check_skill(skill_dir: Path, root: Path, owners: dict[str, str]) -> list[str
             "and move detail into references/"
         )
     return problems
+
+
+def check_readme(root: Path) -> list[str]:
+    """README.md is the landing page, so it must list every plugin."""
+    readme = root / "README.md"
+    if not readme.is_file():
+        return ["README.md: missing"]
+    text = readme.read_text(encoding="utf-8")
+    return [
+        f"README.md: plugin `{d.name}` is missing from the plugin list"
+        for d in plugin_dirs(root)
+        if f"`{d.name}`" not in text
+    ]
 
 
 def check_skill_file_locations(root: Path) -> list[str]:
