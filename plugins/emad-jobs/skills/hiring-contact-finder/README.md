@@ -24,11 +24,13 @@ A short report in the chat:
 
 - the role's status, key facts, and a link to apply;
 - a fit verdict (**Strong**, **Partial**, **Weak**, or **Not checked** without your
-  background), including location and work eligibility, and the main gap;
+  background), including location, work authorization (as you state it, or unknown),
+  and the main gap;
 - up to three people, each with their role, a confidence level and a linked source;
-- one person to contact first, through one professional channel, and a backup. If no
-  one is found with enough confidence, it names a fallback channel instead, such as
-  the application's cover-letter field, or says that no channel was found;
+- one person to contact first, through one professional channel, and a backup when
+  there is one. If no one is found with enough confidence, there is no person and no
+  backup: it names a fallback channel instead, such as the application's
+  cover-letter field, or says that no channel was found;
 - a draft message (none when no channel was found), a short "before you send"
   checklist, and the next steps.
 

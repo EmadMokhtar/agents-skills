@@ -92,9 +92,13 @@ matching points. They become the core of the message.
 Always check **location and work eligibility** too: the listed countries, the
 remote policy, and relocation support. Compare them with where the candidate
 lives. A location mismatch is often the biggest risk, and it is worth raising in
-the message as a direct question. If you do not know where the candidate lives or
-whether they may work there, report the location as **unknown** and ask. Do not
-guess.
+the message as a direct question. If you do not know where the candidate lives,
+report the location as **unknown** and ask.
+
+Keep work authorization separate from location. Living in an allowed country does
+not mean the candidate may work there, and living elsewhere does not mean they may
+not. Report work authorization only from what the candidate says. Otherwise report
+it as **unknown** and raise it as a question. Do not guess.
 
 Name the most important gap. If a key requirement is missing from the
 candidate's background, say what concrete example would cover it.
@@ -211,7 +215,8 @@ Adjust the length to the channel: a DM is 3–5 sentences, an email is up to abo
 150 words. Write a draft for the first-choice person. Write a second draft only
 for the backup person, and adapt it to what that person does.
 
-Every draft ends with exactly one request, written as a direct question, for
+The last sentence of every draft, before the sign-off, is exactly one request,
+written as a direct question, for
 example "Could you take a look at my application?". Do not add offers such as "I
 can send a write-up" or "happy to share more": an offer is not a request, and next
 to one it reads as a second ask.
@@ -232,7 +237,8 @@ Key facts: <team> · <location and remote policy> · <pay, if listed>
 ### Fit: Strong | Partial | Weak | Not checked
 - <reason>
 - <reason>
-- Location: <eligible / risk / not eligible / unknown> — <why>
+- Location: <inside the allowed area / outside it (risk) / unknown> — <why>
+- Work authorization: <as the candidate stated / unknown — ask>
 - Main gap: <gap and the example that would cover it>
 
 ### People
