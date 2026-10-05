@@ -17,7 +17,7 @@
 - Plugin names match `^emad-[a-z0-9]+(-[a-z0-9]+)*$` and equal their folder name.
 - Skill names match `^[a-z0-9]+(-[a-z0-9]+)*$`, are at most 64 characters, equal their folder name, and are **unique across all plugins**.
 - Marketplace name `emad-skills`. Owner `{"name": "Emad Mokhtar", "url": "https://github.com/EmadMokhtar"}`. Repository `EmadMokhtar/agents-skills`. Site `https://emadmokhtar.github.io/agents-skills/`.
-- `version` lives only in `plugin.json` and `.release-please-manifest.json`, never in a catalog. New plugins start at `0.0.0`, which means "not released yet". The first `feat` release makes them `0.1.0`. (This changes the spec's "start at `0.1.0`". Without it, the first `feat:` merge would release `0.2.0`.)
+- `version` lives only in `plugin.json` and `.release-please-manifest.json`, never in a catalog. New plugins start at `0.0.0`, which means "not released yet". The first `feat` release makes them `0.1.0`. (This changes the spec's "start at `0.1.0`". Without it, the first `feat:` merge would release `0.2.0`.) `release-please-config.json` also sets `initial-version: 0.1.0`; without it release-please treats `0.0.0` as "never released" and makes the first release `1.0.0`.
 - `plugin.json` never has `extensions` or `author.email`. It always has `version`, `description` and `author`. Without the last two, `claude plugin validate --strict` fails.
 - Every `SKILL.md` has `license: MIT` and stays under 500 lines. Frontmatter must be strict YAML: no unquoted `: ` inside a value, and no `[a, b]` flow lists. `agentskills validate` rejects both.
 - Links in a skill's `README.md` are absolute URLs.
@@ -4155,7 +4155,7 @@ Plan: `docs/superpowers/plans/2026-10-05-plugin-repo.md`
 ## Before merging (one-time settings)
 
 - [ ] Settings → Pages → Source = GitHub Actions
-- [ ] Secret `RELEASE_PLEASE_TOKEN` (fine-grained, this repository only, Contents and Pull requests read/write)
+- [ ] Secret `RELEASE_PLEASE_TOKEN` (fine-grained, this repository only, Contents, Issues and Pull requests read/write)
 - [ ] Secret `CLAUDE_CODE_OAUTH_TOKEN` (`claude setup-token`)
 - [ ] Label `run-evals`
 - [ ] Branch protection on `main`: require `checks` and `pr-title`; squash merge only

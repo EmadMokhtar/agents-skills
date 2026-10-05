@@ -50,6 +50,11 @@ def check_release_config(root: Path) -> list[str]:
         return [f"{RELEASE_CONFIG} / {RELEASE_MANIFEST}: cannot read: {exc}"]
     packages = config.get("packages", {})
     problems: list[str] = []
+    if config.get("initial-version") != "0.1.0":
+        problems.append(
+            f'{RELEASE_CONFIG}: set "initial-version": "0.1.0" so a plugin\'s first release '
+            "is 0.1.0, not 1.0.0"
+        )
     on_disk: set[str] = set()
     for plugin_dir in plugin_dirs(root):
         key = f"plugins/{plugin_dir.name}"

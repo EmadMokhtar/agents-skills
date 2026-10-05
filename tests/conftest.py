@@ -18,7 +18,10 @@ class FakeRepo:
         self.root = root
         (root / "plugins").mkdir()
         (root / "README.md").write_text("# agents-skills\n\n", encoding="utf-8")
-        self._write_json(RELEASE_CONFIG, {"release-type": "simple", "packages": {}})
+        self._write_json(
+            RELEASE_CONFIG,
+            {"release-type": "simple", "initial-version": "0.1.0", "packages": {}},
+        )
         self._write_json(RELEASE_MANIFEST, {})
 
     def _write_json(self, rel: str, data: object) -> None:

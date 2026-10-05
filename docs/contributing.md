@@ -110,6 +110,9 @@ own.
    `plugins/<plugin>/CHANGELOG.md`, tags `<plugin>-v<version>`, and publishes a GitHub
    Release.
 
+The config sets `initial-version: 0.1.0`, so a plugin's first release is `0.1.0`, not `1.0.0`.
+`just check` fails if that key is missing.
+
 release-please picks the plugin from the paths a commit touches, not from its scope. Its log
 always warns that `version.txt` does not exist. That warning is expected: this repository
 keeps the version in `plugin.json`.
@@ -121,9 +124,10 @@ These cannot be set from a file:
 - **Settings → Pages → Source = GitHub Actions.** The first docs deploy fails until this is
   set.
 - **Secret `RELEASE_PLEASE_TOKEN`:** a fine-grained personal access token for this repository
-  only, with *Contents* and *Pull requests* set to read and write. A pull request opened with
-  the default `GITHUB_TOKEN` does not trigger CI, so the release pull request could never
-  pass its checks.
+  only, with *Contents*, *Issues* and *Pull requests* set to read and write. release-please
+  manages its `autorelease:` labels through the issues API, so it needs *Issues*. A pull
+  request opened with the default `GITHUB_TOKEN` does not trigger CI, so the release pull
+  request could never pass its checks.
 - **Secret `CLAUDE_CODE_OAUTH_TOKEN`:** create it with `claude setup-token`. Used only by the
   Evals workflow.
 - **Label `run-evals`.**

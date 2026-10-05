@@ -391,6 +391,8 @@ release-please in manifest mode.
 - `.release-please-manifest.json` holds the current version of each plugin. Plugins start at
   `0.0.0`, which means "not released yet", so the first `feat` release is `0.1.0`. (Changed
   during planning: starting at `0.1.0` would make the first `feat` merge release `0.2.0`.)
+  `release-please-config.json` also sets `initial-version: 0.1.0`. Without it, release-please
+  treats `0.0.0` as "never released" and makes the first release `1.0.0`.
 - Bump rules come from Conventional Commits: `fix` → patch, `feat` → minor, `!` or
   `BREAKING CHANGE:` → major (minor while below 1.0). release-please decides **which plugin**
   a commit belongs to from the paths it touches, not from the scope. A scope such as
@@ -402,7 +404,8 @@ release-please in manifest mode.
   `RELEASE_PLEASE_TOKEN` secret. Reason: a pull request opened with the default
   `GITHUB_TOKEN` does not trigger other workflows, so CI would never run on release pull
   requests. The token is a fine-grained personal access token scoped to this repository only,
-  with Contents and Pull requests set to read/write.
+  with Contents, Issues and Pull requests set to read/write. (Issues is needed because
+  release-please manages its `autorelease:` labels through the issues API.)
 
 This differs from `skill-evaluator` and `pyfr`, which bump and tag directly on `main`
 without a release pull request. ADR 0003 records why: several independently versioned
@@ -471,7 +474,8 @@ maintainer has read (§9.3).
 Documented in `docs/contributing.md`:
 
 - Settings → Pages → Source = "GitHub Actions" (the first deploy fails until this is set).
-- Secrets: `RELEASE_PLEASE_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN` (created with
+- Secrets: `RELEASE_PLEASE_TOKEN` (fine-grained, this repository only, Contents, Issues and
+  Pull requests set to read/write), `CLAUDE_CODE_OAUTH_TOKEN` (created with
   `claude setup-token`).
 - Label: `run-evals`.
 - Branch protection on `main`: require the CI checks and a Conventional Commits PR title;

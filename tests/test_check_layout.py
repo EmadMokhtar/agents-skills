@@ -177,6 +177,11 @@ def test_unregistered_plugin_is_reported(valid):
     assert problems_mentioning(found, "plugins/emad-alpha has no version")
 
 
+def test_release_config_needs_initial_version(valid):
+    edit_json(valid.root / "release-please-config.json", lambda d: d.pop("initial-version"))
+    assert problems_mentioning(find_problems(valid.root), '"initial-version": "0.1.0"')
+
+
 def test_release_component_must_be_the_plugin_name(valid):
     edit_json(
         valid.root / "release-please-config.json",

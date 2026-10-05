@@ -15,7 +15,8 @@ We use release-please in manifest mode, with one package per plugin. Each packag
 `simple` release type and a JSON updater for `plugin.json`. Each plugin gets its own release
 pull request (`separate-pull-requests`) and tags of the form `<plugin>-v<version>`. The
 workflow acts with a `RELEASE_PLEASE_TOKEN` personal access token, so CI runs on the release
-pull requests. New plugins start at `0.0.0`, which means "not released yet".
+pull requests. New plugins start at `0.0.0`, which means "not released yet". The config sets
+`initial-version: 0.1.0`, so a plugin's first release is `0.1.0`.
 
 ## Alternatives considered
 
@@ -29,6 +30,8 @@ pull requests. New plugins start at `0.0.0`, which means "not released yet".
 
 - Each plugin has its own changelog and releases.
 - A personal access token must be created and renewed.
+- Without `initial-version`, release-please would make the first release `1.0.0`.
+  `just check` fails if the key is missing.
 - `docs`, `chore`, `refactor`, `test`, `build`, `ci` and `style` commits never release. A
   change to a skill's behaviour must be `feat` or `fix`.
 - The `simple` release type logs a harmless warning that `version.txt` does not exist.
