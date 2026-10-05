@@ -325,7 +325,7 @@ The same set runs locally with `just check`. None of them calls a model or needs
 | Check | Command / tool | Catches |
 | --- | --- | --- |
 | Manifest schema | `check-jsonschema --schemafile schemas/agent-plugins/1.0.0/plugin.schema.json plugins/*/plugin.json` | unknown fields, bad names, missing `$schema` |
-| Skill format | `skills-ref validate <skill-dir>` for every skill | frontmatter violations, name ≠ directory |
+| Skill format | `agentskills validate <skill-dir>` (from the `skills-ref` package) for every skill | frontmatter violations, name ≠ directory |
 | Claude Code view | `claude plugin validate --strict .` and on each `plugins/<plugin>` (locally, `just check` prints a visible warning and skips this row when `claude` is not on `PATH`; CI always runs it) | anything Claude Code would warn about at install |
 | Catalogs in sync | `scripts/sync_catalogs.py --check` | hand-edited or stale catalogs |
 | Repository rules | `pytest` (§9.2) | the rules no external tool knows |
@@ -389,7 +389,8 @@ release-please in manifest mode.
   `<plugin>-v<version>` (for example `emad-coding-v0.2.0`), and an `extra-files` JSON
   updater for `plugin.json` at `$.version`.
 - `.release-please-manifest.json` holds the current version of each plugin. Plugins start at
-  `0.1.0`.
+  `0.0.0`, which means "not released yet", so the first `feat` release is `0.1.0`. (Changed
+  during planning: starting at `0.1.0` would make the first `feat` merge release `0.2.0`.)
 - Bump rules come from Conventional Commits: `fix` → patch, `feat` → minor, `!` or
   `BREAKING CHANGE:` → major (minor while below 1.0). release-please decides **which plugin**
   a commit belongs to from the paths it touches, not from the scope. A scope such as
@@ -438,21 +439,32 @@ Emad uses every day.
   regular expression and the absence of a trailing period. The exact assertion kinds are
   confirmed against the skill-lens eval-file reference during planning.
 
-## 13. Open items to verify during planning
+## 13. Open items — resolved during planning (2026-10-05)
 
-These were not verified during design. The plan must check each one, not assume it.
+1. `skill-lens list plugins` finds nested skills at any depth. `list` and `run` take **one**
+   path each, so CI runs one matrix job per skill.
+2. release-please `simple` only logs "file version.txt did not exist" and never creates it.
+   A JSON `extra-files` updater bumps `plugin.json`. Do not set `version-file`, because it
+   would overwrite `plugin.json` with a bare version string.
+3. `claude plugin validate` works without a login (tested with an empty environment). Pin
+   `@anthropic-ai/claude-code@2.1.289`, which needs Node 22+. A plugin *folder* check reads
+   the skills but not a root `plugin.json`, so CI also validates each `plugin.json` by path.
+4. Codex: `category` is free text, and `interface` is optional. `policy.installation` is one
+   of `AVAILABLE`, `NOT_AVAILABLE`, `INSTALLED_BY_DEFAULT`. `policy.authentication` is one of
+   `ON_INSTALL`, `ON_USE`.
+5. `mkdocs-gen-files` can append to `docs/index.md` inside the build only; the file on disk
+   is not changed. Both MkDocs plugins pull in `properdocs`, which prints a notice unless
+   `DISABLE_MKDOCS_2_WARNING=true`.
+6. `skills-ref` 0.1.1 installs a command named `agentskills`. `agentskills validate <dir>`
+   takes one folder per call. Its parser is strict YAML: unquoted `: ` in a value and
+   `[a, b]` lists fail.
+7. skill-lens 0.20.0 assertion kinds: `contains`, `not_contains`, `regex`, `equals`,
+   `file-produced`, `json-schema`. "First line does not end with a period" is the regex
+   `\A(?![^\n]*\.[ \t]*(?:\n|\Z))`. Eval cases use `task:`, not `prompt:`.
 
-1. Does `skill-lens` discover skills nested under `plugins/*/skills/*/` when given
-   `plugins/`? If not, CI and `just` pass each skills directory explicitly.
-2. release-please `simple` release type: does it insist on writing a `version.txt`? Choose
-   the configuration that bumps only `plugin.json` and `CHANGELOG.md`.
-3. Does `claude plugin validate` run in CI without authentication? Which npm package and
-   version to pin?
-4. Codex catalog: allowed `category` values; whether `interface` is required.
-5. Can `mkdocs-gen-files` append to the hand-written `docs/index.md`? If not, the catalog
-   lives only on `skills/index.md` and Home links to it.
-6. `skills-ref` 0.1.1 command-line usage.
-7. skill-lens assertion kinds for a regular expression and for "does not end with".
+Also found: skill-lens's `claude-code` runner starts Claude Code with
+`--dangerously-skip-permissions`. The `run-evals` label must only go on a pull request the
+maintainer has read (§9.3).
 
 ## 14. One-time manual repository settings
 
