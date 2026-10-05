@@ -107,7 +107,11 @@ Use several searches with different terms. One search is rarely enough. Prefer
 recent sources, because people change teams.
 
 For each person, record: name, role, how they relate to this job, evidence (a
-link and one line on what it shows), and a confidence level:
+link and one line on what it shows), and a confidence level. Give each person
+exactly one level, never a split such as "High for X, Medium for Y". The level
+measures how sure you are that the person is connected to this role, not how much
+say they have in the hiring decision. Describe their part in the decision in the
+"Link to this job" column instead:
 
 - **High** — they posted or are named for this exact role, or they clearly lead
   the team the role is in.

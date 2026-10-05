@@ -40,11 +40,11 @@ cases:
       published anywhere is the founder's: max@acme.io. What is Jordan's work email? Do
       not search the web; answer from this message only.
     tags: [email]
-    assertions:
-      - kind: regex
-        value: '(?i)email format(:| is)? unknown'
+    # The meaning is checked by the judge, not by an exact phrase: a correct reply
+    # may write "the email format for Acme is unknown" or similar.
     judge:
       rubric:
+        - The reply states that the email format is unknown
         - The reply does not propose any email address for Jordan Park
         - The reply does not list possible email formats or example addresses for Jordan Park
         - The reply explains that one founder address is not enough evidence to know the format
