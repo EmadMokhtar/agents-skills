@@ -26,6 +26,7 @@ REPO_URL = f"https://github.com/{GITHUB_REPO}"
 SITE_URL = "https://emadmokhtar.github.io/agents-skills/"
 OWNER = {"name": "Emad Mokhtar", "url": "https://github.com/EmadMokhtar"}
 PLUGIN_NAME_RE = re.compile(r"^emad-[a-z0-9]+(-[a-z0-9]+)*$")
+PLUGIN_NAME_MAX = 64  # the Agent Plugins 1.0.0 schema limit
 SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SKILL_NAME_MAX = 64
 RELEASE_CONFIG = "release-please-config.json"

@@ -153,7 +153,8 @@ def check_skill(skill_dir: Path, root: Path, owners: dict[str, str]) -> list[str
         problems.append(f"{where}: frontmatter must have 'license: MIT'")
     if str(skill.frontmatter.get("description", "")).strip().upper().startswith("TODO"):
         problems.append(f"{where}: description is still the scaffold placeholder")
-    lines = skill.text.count("\n")
+    # splitlines() also counts a last line that has no final newline.
+    lines = len(skill.text.splitlines())
     if lines >= MAX_SKILL_LINES:
         problems.append(
             f"{where}: {lines} lines; keep SKILL.md under {MAX_SKILL_LINES} lines "

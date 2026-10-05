@@ -47,6 +47,7 @@ def test_create_plugin_writes_a_valid_manifest_and_registers_it(repo):
         ("coding", "Skills.", "must match"),
         ("emad-Coding", "Skills.", "must match"),
         ("emad-coding", "   ", "description must not be empty"),
+        ("emad-" + "a" * 60, "Skills.", "at most 64"),
     ],
 )
 def test_refused_plugin_writes_nothing(repo, name, description, message):

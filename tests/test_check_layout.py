@@ -119,6 +119,13 @@ def test_long_skill_file_is_reported(repo):
     assert problems_mentioning(find_problems(repo.root), "keep SKILL.md under 500 lines")
 
 
+def test_long_skill_file_without_final_newline_is_reported(repo):
+    repo.add_plugin("emad-alpha")
+    # 5 frontmatter lines + 495 body lines = 500 lines, and the last has no newline.
+    repo.add_skill("emad-alpha", "one", body="line\n" * 494 + "line")
+    assert problems_mentioning(find_problems(repo.root), "500 lines; keep SKILL.md")
+
+
 def test_broken_skill_file_is_reported_not_raised(repo):
     repo.add_plugin("emad-alpha")
     skill_dir = repo.add_skill("emad-alpha", "one")

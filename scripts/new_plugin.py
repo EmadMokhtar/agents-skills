@@ -16,6 +16,7 @@ from pathlib import Path
 
 from repo_model import (
     OWNER,
+    PLUGIN_NAME_MAX,
     PLUGIN_NAME_RE,
     RELEASE_CONFIG,
     RELEASE_MANIFEST,
@@ -39,6 +40,8 @@ class ScaffoldError(Exception):
 def create_plugin(root: Path, name: str, description: str) -> Path:
     if not PLUGIN_NAME_RE.match(name):
         raise ScaffoldError(f"plugin name {name!r} must match {PLUGIN_NAME_RE.pattern}")
+    if len(name) > PLUGIN_NAME_MAX:
+        raise ScaffoldError(f"plugin name must be at most {PLUGIN_NAME_MAX} characters")
     if not description.strip():
         raise ScaffoldError("description must not be empty")
     plugin_dir = root / "plugins" / name
