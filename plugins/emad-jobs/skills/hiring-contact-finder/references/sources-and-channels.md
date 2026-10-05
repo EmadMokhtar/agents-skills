@@ -128,5 +128,6 @@ Only if no better channel exists:
   company repository, it counts as published in a work context. Give its date.
   Still mark it unverified if it is older than about a year.
 - Show the evidence ("press page uses first.last@company.com") and label the result
-  **unverified**. If the bar is not met, write "email format unknown".
+  **unverified**. If the bar is not met, write "email format unknown", and do not
+  list possible formats or example addresses for the person.
 - Do not probe mail servers or use paid contact databases to confirm the address.

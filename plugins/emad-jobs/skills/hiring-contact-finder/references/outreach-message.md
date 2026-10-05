@@ -13,7 +13,8 @@ application. It is not a cover letter.
   the candidate gave them. Never invent numbers or achievements.
 - **One clear request.** Pick one: "Could you take a look at my application?", "Is
   this role still a match for someone with X?", or "Would a 15-minute call make
-  sense?" Do not stack several requests.
+  sense?" Write it as one direct question. Do not stack several requests, and do
+  not add offers such as "happy to share more": an offer reads as a second ask.
 - **Honest.** Say "I applied today" only if it is true. If the candidate has not
   applied yet, write "I'm applying today" and remind them to do it.
 - **Short.** A DM is 3–5 sentences. An email is up to about 150 words.
@@ -32,7 +33,7 @@ application. It is not a cover letter.
    role.
 3. **Genuine interest (1 sentence):** a specific reason this team or problem
    interests the candidate.
-4. **Request (1 sentence):** one small, easy request.
+4. **Request (1 sentence):** one small, easy request, written as a direct question.
 5. **Sign-off:** name, and one link (portfolio, GitHub, or personal site).
 
 ## Email subject line
