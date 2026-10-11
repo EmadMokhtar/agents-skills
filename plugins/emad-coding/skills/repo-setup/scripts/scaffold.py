@@ -68,7 +68,7 @@ MODULES: dict[str, tuple[str, tuple[str, ...]]] = {
         (),
     ),
     "agents": ("AGENTS.md, CLAUDE.md and Copilot review instructions", ()),
-    "adr": ("decision records: template, index and four starter records", ()),
+    "adr": ("decision records: template, index and five starter records", ()),
     "docs-site": (
         "MkDocs Material site, getting started, glossary, roadmap, Pages deploy",
         (),

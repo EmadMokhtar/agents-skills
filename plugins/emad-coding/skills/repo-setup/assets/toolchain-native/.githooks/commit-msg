@@ -11,9 +11,14 @@ case "$first_line" in
     "" | "Merge "* | "Revert "* | "fixup! "* | "squash! "*) exit 0 ;;
 esac
 
-pattern='^(build|bump|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([^)[:space:]]+\))?!?: [^[:space:]].*$'
+# The description starts with a lowercase letter and does not end with a period. The pull request
+# title check (pr-title.yml) enforces the same rule, so a commit that passes here passes there.
+pattern='^(build|bump|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([^)[:space:]]+\))?!?: [a-z].*$'
 if printf '%s\n' "$first_line" | grep -Eq "$pattern"; then
-    exit 0
+    case "$first_line" in
+        *.) ;;
+        *) exit 0 ;;
+    esac
 fi
 
 cat >&2 <<'MESSAGE'

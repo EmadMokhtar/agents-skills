@@ -81,7 +81,7 @@ Needs `docs-site`.
 - `scripts/check_docs_updated.py`: fails a pull request that changes `SOURCE_PREFIX` but no
   documentation. The `no-docs-needed` label skips it. Stdlib only.
 - `scripts/check_docs_freshness.py`: warns about pages not reviewed for 180 days, and pages whose
-  `covers:` files changed while the page did not. It never fails. Needs PyYAML (in the `dev` group).
+  `covers:` files changed while the page did not. It never fails. Needs only Python 3 and its standard library.
 - `lychee.toml` and the `links` job: external link check. It is not a required check, because it
   depends on the network.
 - `.github/workflows/docs-gates.yml`: jobs `docs-updated`, `docs-warnings`, `links`.

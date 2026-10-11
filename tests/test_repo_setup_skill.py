@@ -503,6 +503,10 @@ def test_the_hooks_are_executable_and_the_commit_message_check_works(tmp_path):
     assert check("Update auth") != 0
     assert check("feat:missing space") != 0
     assert check("Feat: wrong case") != 0
+    # the description follows the same rule as the pull request title check
+    assert check("feat: Add login") != 0
+    assert check("feat: add login.") != 0
+    assert check("feat(api)!: remove v1 endpoints") == 0
 
 
 def test_toolchain_auto_picks_uv_only_for_a_python_project(tmp_path):
@@ -589,3 +593,16 @@ def test_the_freshness_script_needs_only_the_standard_library(tmp_path):
     assert meta["covers"] == ["justfile", "ops/"]
     assert module.parse_frontmatter("# no front matter\n") == {}
     assert "last_reviewed" not in module.parse_frontmatter("---\nlast_reviewed: soon\n---\nx")
+
+
+def test_the_listing_counts_the_adr_records_correctly(capsys):
+    scaffold.main(["--list"])
+    listing = capsys.readouterr().out
+    records = len(list((SKILL / "assets" / "adr" / "docs" / "adr").glob("0*.md")))
+    assert records == 5
+    assert "five starter records" in listing
+
+
+def test_no_yaml_library_is_required_for_the_docs_scripts(tmp_path):
+    run_scaffold(tmp_path, ["docs-site", "docs-gates"], "--toolchain", "uv")
+    assert "yaml" not in (tmp_path / "pyproject.toml").read_text().lower()
