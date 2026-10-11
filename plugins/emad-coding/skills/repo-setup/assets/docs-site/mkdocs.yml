@@ -1,0 +1,77 @@
+site_name: "__NAME__"
+site_description: "__DESCRIPTION__"
+site_url: "__SITE_URL__"
+repo_url: "https://github.com/__OWNER__/__SLUG__"
+repo_name: "__OWNER__/__SLUG__"
+# Set explicitly: MkDocs 1.6 defaults to edit/master/docs/ for github.com.
+edit_uri: "edit/__BRANCH__/docs/"
+# @if licensed
+copyright: "Licensed under __LICENSE__"
+# @endif
+
+validation:
+  # With --strict, each of these becomes a build failure. A link that no longer resolves is a
+  # broken page, and a warning that nobody reads fixes nothing.
+  anchors: warn
+  absolute_links: warn
+  unrecognized_links: warn
+
+# @if adr
+# The template for new decision records is a skeleton to copy, not a page to read.
+exclude_docs: |
+  adr/template.md
+# @endif
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - Getting started: getting-started.md
+# @if adr
+  - Decisions:
+      - Overview: adr/README.md
+      - 0001 Record decisions as short pages: adr/0001-record-decisions-as-short-pages.md
+      - 0002 Conventional Commits: adr/0002-conventional-commits-and-commitizen.md
+      - 0003 One check recipe for CI and laptops: adr/0003-one-check-recipe.md
+      - 0004 Pin actions by SHA and start with no permissions: adr/0004-pin-actions-and-limit-permissions.md
+      - 0005 Run the tools the same way everywhere: adr/0005-run-tools-the-same-way-everywhere.md
+# @endif
+  - Project:
+      - Roadmap: roadmap.md
+      - Contributing: contributing.md
+      - Glossary: glossary.md

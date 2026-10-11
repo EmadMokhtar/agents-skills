@@ -1,0 +1,60 @@
+version: 2
+
+# Dependabot opens one pull request a week for each kind of dependency. The commit prefix
+# keeps these pull requests valid Conventional Commits, and `ci(deps)` and `build(deps)` do
+# not cause a release on their own.
+updates:
+# @if uv
+  # The tools in pyproject.toml and uv.lock.
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      python:
+        patterns: ["*"]
+
+# @endif
+  # The pinned actions in .github/workflows. Each action is pinned by commit SHA, and
+  # Dependabot moves the SHA and the version comment together.
+  - package-ecosystem: "github-actions"
+    directories:
+      - "/"
+# @if native
+      - "/.github/actions/setup-tools"
+# @endif
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci(deps)"
+    groups:
+      actions:
+        patterns: ["*"]
+# @if uv
+
+  # The hook versions in .pre-commit-config.yaml.
+  - package-ecosystem: "pre-commit"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      hooks:
+        patterns: ["*"]
+# @endif
+# @if container
+
+  # The base images in the Dockerfile.
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "build(deps)"
+    groups:
+      images:
+        patterns: ["*"]
+# @endif

@@ -1,0 +1,15 @@
+# The only way to exempt a finding from `just scan-tree` and `just scan-image`.
+#
+# Every entry must say why the finding does not apply, name the path it applies to, and
+# EXPIRE. After `expired_at` the finding fails the scan again until someone decides again.
+# Renewing an entry means checking whether a fix has been released, and that is what the
+# date is for. `trivy image --show-suppressed` lists what this file hides.
+#
+# Example:
+#
+# vulnerabilities:
+#   - id: CVE-2026-00000
+#     paths: ["usr/local/bin/some-tool"]
+#     statement: "Why this code path is not reachable here, and what would fix it."
+#     expired_at: 2027-01-31
+vulnerabilities: []

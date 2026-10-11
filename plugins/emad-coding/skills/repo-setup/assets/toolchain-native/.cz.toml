@@ -1,0 +1,14 @@
+# @if release
+# commitizen settings. commitizen reads this file by itself, so no Python project file is needed.
+# See https://commitizen-tools.github.io/commitizen/config/configuration_file/
+[tool.commitizen]
+name = "cz_conventional_commits"
+# The version is the newest git tag, so no file has to store it.
+version_provider = "scm"
+tag_format = "v$version"
+update_changelog_on_bump = true
+changelog_file = "CHANGELOG.md"
+# Before 1.0.0 a breaking change raises the minor number (0.5.0 to 0.6.0). Moving to
+# 1.0.0 should be a choice, not a side effect of the first `feat!:`.
+major_version_zero = true
+# @endif

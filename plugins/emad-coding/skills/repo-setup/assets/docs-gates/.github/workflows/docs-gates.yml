@@ -1,0 +1,81 @@
+name: Docs gates
+
+# Three checks that keep the documentation true:
+#   docs-updated   fails a pull request that changes source code but no documentation
+#   docs-warnings  advisory; names stale pages and pages whose covered files changed
+#   links          fails on a dead external link
+on:
+  pull_request:
+    # `labeled` and `unlabeled` are not default types, but the `no-docs-needed` escape hatch
+    # needs them. Without a re-run, adding the label leaves the failed check red.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions: {}
+
+concurrency:
+  group: docs-gates-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  docs-updated:
+    # A blunt backstop, not a proof. A refactor with no visible change trips it. The
+    # `no-docs-needed` label is the way out. A label is used instead of a commit trailer,
+    # because squash merging rewrites the commit message.
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-docs-needed') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          # `git diff base...head` needs both sides of the history.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - name: Check that documentation was updated
+        env:
+          # Passed through env, so nothing from the event payload can be read as shell.
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: just docs-updated "$BASE_SHA" HEAD
+
+  docs-warnings:
+    # Advisory only. It never fails the pull request.
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - name: Report documentation freshness
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: just docs-freshness "$BASE_SHA" HEAD
+
+  links:
+    # External links only. Links between pages are `mkdocs build --strict`'s job. This is a
+    # separate job because it depends on the internet being well, and a network problem
+    # should not look like a broken site.
+    #
+    # This job does not run `just links`: the lychee action brings its own lychee program,
+    # which this runner does not have. lychee.toml is still the one definition of the rules.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Check external links
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
+        env:
+          # Lets lychee call the GitHub API without hitting the anonymous rate limit.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --config lychee.toml --no-progress 'docs/**/*.md' README.md
+          fail: true

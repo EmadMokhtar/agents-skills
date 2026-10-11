@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [__BRANCH__]
+  pull_request:
+
+# No job gets a token by default. Each job asks for what it needs.
+permissions: {}
+
+# One run per branch. Cancelling an old run is safe here: this workflow publishes nothing.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # `just check` is the one definition of "the checks". The job runs exactly what a
+  # developer runs, so a failure here can be reproduced on a laptop with one command.
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+# @if uv
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - name: Install the tools
+        run: uv sync --all-groups --locked
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          actionlint: "true"
+          gitleaks: "true"
+          editorconfig: "true"
+# @if docs-site
+          mkdocs: "true"
+# @endif
+# @endif
+      - name: Run every check
+        run: just check

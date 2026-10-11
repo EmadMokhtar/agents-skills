@@ -1,0 +1,30 @@
+# @if uv
+# Tools
+.venv/
+# @endif
+# @if docs-gates
+__pycache__/
+# @endif
+
+# @if docs-site
+# Documentation build
+site/
+# @endif
+# @if container
+# Scan output
+sbom/
+# @endif
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/
+
+# Local secrets. Commit `.env.example`, never `.env`.
+.env
+.env.*
+!.env.example
+
+# Claude Code: local settings and agent worktrees
+.claude/settings.local.json
+.claude/worktrees/

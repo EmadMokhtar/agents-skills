@@ -9,7 +9,7 @@
     {
       "name": "emad-coding",
       "source": "./plugins/emad-coding",
-      "description": "Coding workflow skills: commit messages, pull request titles, and more.",
+      "description": "Coding workflow skills: commit messages, pull request titles, repository setup, and more.",
       "author": {
         "name": "Emad Mokhtar",
         "url": "https://github.com/EmadMokhtar"

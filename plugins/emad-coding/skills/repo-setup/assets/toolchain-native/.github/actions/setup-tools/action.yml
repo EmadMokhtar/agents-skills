@@ -1,0 +1,83 @@
+name: Set up the repository's tools
+description: >-
+  Installs just and the tools that the justfile calls, at pinned versions, so every CI job runs the
+  same versions. This file is the one place where the versions live. On a laptop you install the
+  tools yourself; `just doctor` lists what is missing and how to install it.
+
+inputs:
+  actionlint:
+    description: Install actionlint, the GitHub Actions workflow linter.
+    default: "false"
+  gitleaks:
+    description: Install gitleaks, the secret scanner.
+    default: "false"
+  editorconfig:
+    description: Install editorconfig-checker, which checks file endings and whitespace.
+    default: "false"
+# @if release
+  commitizen:
+    description: Install commitizen, which reads Conventional Commits to make releases.
+    default: "false"
+# @endif
+# @if docs-site
+  mkdocs:
+    description: Install MkDocs with the Material theme, which builds the documentation.
+    default: "false"
+# @endif
+# @if security
+  trivy:
+    description: Install Trivy, the scanner for vulnerabilities, secrets and bad configuration.
+    default: "false"
+# @endif
+
+runs:
+  using: composite
+  steps:
+    - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+    # Go is already on GitHub's runners. `go install` builds each tool at the exact version below.
+    - name: Cache the Go tools
+      id: go-tools
+      if: inputs.actionlint == 'true' || inputs.gitleaks == 'true' || inputs.editorconfig == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+      with:
+        path: ~/go/bin
+        key: go-tools-${{ runner.os }}-${{ hashFiles('.github/actions/setup-tools/action.yml') }}-${{ inputs.actionlint }}-${{ inputs.gitleaks }}-${{ inputs.editorconfig }}
+    - name: Install the Go tools
+      if: steps.go-tools.outputs.cache-hit != 'true' && (inputs.actionlint == 'true' || inputs.gitleaks == 'true' || inputs.editorconfig == 'true')
+      shell: bash
+      env:
+        ACTIONLINT: ${{ inputs.actionlint }}
+        GITLEAKS: ${{ inputs.gitleaks }}
+        EDITORCONFIG: ${{ inputs.editorconfig }}
+      run: |
+        if [ "$ACTIONLINT" = "true" ]; then
+          go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
+        fi
+        if [ "$GITLEAKS" = "true" ]; then
+          go install github.com/zricethezav/gitleaks/v8@v8.30.1
+        fi
+        if [ "$EDITORCONFIG" = "true" ]; then
+          go install github.com/editorconfig-checker/editorconfig-checker/v4/cmd/editorconfig-checker@v4.0.2
+        fi
+    - name: Put the Go tools on the path
+      shell: bash
+      run: echo "$HOME/go/bin" >> "$GITHUB_PATH"
+# @if release
+    - name: Install commitizen
+      if: inputs.commitizen == 'true'
+      shell: bash
+      run: pipx install "commitizen==4.18.0"
+# @endif
+# @if docs-site
+    - name: Install MkDocs
+      if: inputs.mkdocs == 'true'
+      shell: bash
+      run: pipx install --include-deps "mkdocs-material==9.7.7"
+# @endif
+# @if security
+    - name: Install Trivy
+      if: inputs.trivy == 'true'
+      uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567  # v0.3.1
+      with:
+        version: v0.75.0
+# @endif

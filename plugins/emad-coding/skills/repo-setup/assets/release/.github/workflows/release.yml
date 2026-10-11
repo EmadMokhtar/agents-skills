@@ -1,0 +1,108 @@
+name: Release
+
+# Releases the repository with commitizen (a tool that reads Conventional Commits). On each
+# push it looks at the commits since the last tag. If any of them can be released (`feat`,
+# `fix`, or a breaking change), it picks the next version, writes CHANGELOG.md, commits that
+# as `bump: ...`, tags it, and publishes a GitHub Release.
+on:
+  push:
+    branches: [__BRANCH__]
+  # Allows a release without a code change.
+  workflow_dispatch:
+
+permissions: {}
+
+# Never two releases at once: they would race for the same tag. Never cancel one that is
+# running either: a cancelled release can leave a tag with no GitHub Release.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # The bump commit is itself a push to the branch. Skip it, or this workflow would start
+    # itself forever. A manual run has no head commit, so the message is empty and the job runs.
+    if: github.ref == 'refs/heads/__BRANCH__' && !startsWith(github.event.head_commit.message, 'bump:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    outputs:
+      released: ${{ steps.bump.outputs.released }}
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          # commitizen reads the whole history back to the last tag.
+          fetch-depth: 0
+          persist-credentials: false
+# @if uv
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          enable-cache: true
+      - name: Choose how to run commitizen
+        run: echo "CZ=uv run --locked --group dev cz" >> "$GITHUB_ENV"
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          commitizen: "true"
+      - name: Choose how to run commitizen
+        run: echo "CZ=cz" >> "$GITHUB_ENV"
+# @endif
+      - name: Identify the committer
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Bump the version and write the changelog
+        id: bump
+        run: |
+          set +e
+          $CZ bump --yes --changelog --check-consistency
+          status=$?
+          set -e
+          # 3 means no new commits since the last tag. 21 means there are new commits, but
+          # none can be released (for example only `docs` or `chore`). Neither is an error.
+          if [ "$status" -eq 3 ] || [ "$status" -eq 21 ]; then
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "No releasable commits since the last tag."
+            exit 0
+          fi
+          if [ "$status" -ne 0 ]; then
+            exit "$status"
+          fi
+          echo "released=true" >> "$GITHUB_OUTPUT"
+          echo "version=$($CZ version --project)" >> "$GITHUB_OUTPUT"
+      - name: Push the release
+        if: steps.bump.outputs.released == 'true'
+        env:
+          # With a protected branch, GITHUB_TOKEN cannot push the bump commit. Add a
+          # RELEASE_TOKEN secret from an account that may bypass the branch rules.
+          # See docs/contributing.md, "One-time repository settings".
+          PUSH_TOKEN: ${{ secrets.RELEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          remote="https://x-access-token:${PUSH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if ! git push --atomic "$remote" "HEAD:refs/heads/__BRANCH__" "refs/tags/v${VERSION}"; then
+            echo "::error::The push was refused. If __BRANCH__ is protected, add a RELEASE_TOKEN secret. See docs/contributing.md."
+            exit 1
+          fi
+      - name: Publish the GitHub Release
+        if: steps.bump.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          $CZ changelog "v${VERSION}" --dry-run > release-notes.md
+          gh release create "v${VERSION}" --title "v${VERSION}" --notes-file release-notes.md
+# @if container
+
+  publish-images:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/publish-images.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+# @endif

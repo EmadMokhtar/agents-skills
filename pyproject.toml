@@ -53,3 +53,7 @@ select = ["E", "F", "I", "UP", "B", "S"]
 "tests/**" = ["S101", "S603", "S607"]
 # Scripts run git with a fixed argument list and no shell (S603, S607).
 "scripts/**" = ["S603", "S607"]
+# The same holds for the scripts that skills bundle, and for the scripts they copy into other
+# repositories.
+"plugins/**/scripts/**" = ["S603", "S607"]
+"plugins/**/assets/**" = ["S603", "S607"]

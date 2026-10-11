@@ -1,0 +1,65 @@
+name: Container
+
+on:
+  pull_request:
+  push:
+    branches: [__BRANCH__]
+
+permissions: {}
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # Builds the image for amd64 and arm64 with no output. It proves the Dockerfile works on
+    # both, so one image serves Apple Silicon laptops and cloud servers. Pushing is the job of
+    # publish-images.yml, after a release.
+    #
+    # QEMU provides the emulated architecture. There is no setup-buildx action on purpose: it
+    # makes its own builder the current one, and then a plain `docker build` in the same job
+    # no longer loads its result into Docker. The recipe creates its own builder instead.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1  # v4.4.0
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - name: Build for both architectures
+        run: just build-multiarch
+
+  scan:
+    # `just scan-image` fails on a finding that has a fix. `just sbom` writes the list of
+    # everything inside the image, and the job keeps it as an artifact.
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+# @if uv
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567  # v0.3.1
+        with:
+          version: v0.75.0
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          trivy: "true"
+# @endif
+      - name: Scan the image
+        run: just scan-image
+      - name: Write the software bill of materials
+        run: just sbom
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: sbom
+          path: sbom/*.cdx.json
+          if-no-files-found: error

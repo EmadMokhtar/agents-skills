@@ -1,0 +1,124 @@
+name: Nightly
+
+# Runs the checks when nobody pushed. A check can start failing with no new commit: a hook gets
+# a new rule, an external link dies, or an advisory is published against a version we already use.
+on:
+  schedule:
+    # 03:17 UTC. Not on the hour: GitHub queues every scheduled job at :00, so a job that
+    # starts at another minute usually starts sooner.
+    - cron: "17 3 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+# @if uv
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - name: Install the tools
+        run: uv sync --all-groups --locked
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          actionlint: "true"
+          gitleaks: "true"
+          editorconfig: "true"
+# @if docs-site
+          mkdocs: "true"
+# @endif
+# @endif
+      - name: Run every check
+        run: just check
+# @if docs-gates
+
+  links:
+    # The full sweep over every Markdown file. Pull requests check links too, but an
+    # external link breaks without anyone changing a file here, so nothing else would
+    # ever look again.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --config lychee.toml --no-progress '**/*.md'
+          fail: true
+# @endif
+# @if security
+
+  scan-tree:
+    # The same scan that runs on pull requests. Its result can change with no commit,
+    # because a new advisory can be published against a version that is already locked.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+# @if uv
+      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3  # v4.0.0
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567  # v0.3.1
+        with:
+          version: v0.75.0
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          trivy: "true"
+# @endif
+      - run: just scan-tree
+# @endif
+# @if container
+
+  scan-published:
+    # A vulnerability is published against a version that is already shipped. Nothing else
+    # would re-check the image that people actually run.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: read
+    env:
+      TRIVY_USERNAME: ${{ github.actor }}
+      TRIVY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+# @if uv
+      - uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567  # v0.3.1
+        with:
+          version: v0.75.0
+# @else
+      - uses: ./.github/actions/setup-tools
+        with:
+          trivy: "true"
+# @endif
+      - name: Scan the latest published image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}:latest"
+          if ! docker manifest inspect "$image" >/dev/null 2>&1; then
+            echo "No image is published yet, so there is nothing to scan."
+            exit 0
+          fi
+          trivy image --ignorefile ops/trivy/.trivyignore.yaml --severity HIGH,CRITICAL \
+            --ignore-unfixed --exit-code 1 --scanners vuln,secret --no-progress "$image"
+# @endif

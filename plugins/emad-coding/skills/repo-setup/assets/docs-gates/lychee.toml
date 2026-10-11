@@ -1,0 +1,48 @@
+# External link checking. `mkdocs build --strict` already checks the links between pages.
+# This checks links to other sites, which break without anyone touching a file here.
+
+# Retry instead of failing on a slow host. A checker that reports false failures gets
+# switched off within a month.
+max_retries = 3
+retry_wait_time = 2
+timeout = 20
+
+# Be polite. Too many parallel requests to one host is what causes a 429 (rate limit).
+max_concurrency = 8
+
+# Some hosts refuse a request that has no user agent, or one that looks like a scraper.
+user_agent = "Mozilla/5.0 (compatible; lychee; +https://github.com/__OWNER__/__SLUG__)"
+
+# 429 means "slow down", not "this link is dead".
+accept = ["200..=299", "429"]
+
+# Every entry is a regular expression. Single quotes keep the backslashes as they are.
+exclude = [
+    # Addresses that work on your own machine and nowhere else.
+    '^https?://localhost',
+    '^https?://127\.0\.0\.1',
+    '^https?://0\.0\.0\.0',
+    # Placeholder hosts in examples.
+    '^https?://([a-z0-9-]+\.)*example\.com(:\d+)?(/|$)',
+    # MkDocs Material edit links point at a path on a branch. They return 404 for a page that
+    # was added in the commit being checked.
+    '^https://github\.com/__OWNER__/__SLUG__/edit/',
+    # Links to files in this repository on GitHub. A file added in the branch being checked is
+    # not on the default branch yet.
+    '^https://github\.com/__OWNER__/__SLUG__/(blob|tree)/',
+    # This repository's own site exists only after the deploy. `mkdocs build --strict` already
+    # proves that the pages and anchors inside it exist.
+    '^https://__OWNER_LOWER__\.github\.io/__SLUG__/',
+    # A workflow's badge exists only after that workflow has run on the default branch.
+    '^https://github\.com/__OWNER__/__SLUG__/actions/workflows/[^/]+/badge\.svg$',
+]
+
+# Checked as source text, not as a built site.
+exclude_path = [
+    "site",
+    ".venv",
+# @if adr
+    # A skeleton to copy, not a page to read.
+    "docs/adr/template.md",
+# @endif
+]
