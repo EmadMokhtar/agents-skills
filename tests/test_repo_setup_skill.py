@@ -634,6 +634,28 @@ def test_a_source_folder_with_shell_characters_is_refused(tmp_path, prefix):
     assert list(tmp_path.iterdir()) == []
 
 
+@pytest.mark.parametrize("prefix", ["src", "cmd/,internal", "src/,lib"])
+def test_a_source_folder_without_a_trailing_slash_is_refused(tmp_path, prefix):
+    with pytest.raises(SystemExit, match="ending in a slash"):
+        scaffold.build_values([*VALUES, f"SOURCE_PREFIX={prefix}"], "MIT")
+
+
+def test_the_nightly_scan_logs_in_to_ghcr_before_it_inspects_the_image(tmp_path):
+    run_scaffold(tmp_path, ["security", "release", "container", "nightly"])
+    text = (tmp_path / ".github/workflows/nightly.yml").read_text()
+    assert text.index("docker login ghcr.io") < text.index("docker manifest inspect")
+
+
+def test_the_contributing_table_does_not_ask_for_docker_to_scan_the_tree(tmp_path):
+    run_scaffold(tmp_path, ["security"])
+    row = next(
+        line
+        for line in (tmp_path / "docs/contributing.md").read_text().splitlines()
+        if "just scan-tree" in line
+    )
+    assert "Docker" not in row
+
+
 def test_normal_source_folders_still_work(tmp_path):
     run_scaffold(tmp_path, ["docs-site", "docs-gates"])
     justfile = (tmp_path / "justfile").read_text()

@@ -155,11 +155,13 @@ def build_values(pairs: list[str], license_id: str) -> dict[str, str]:
     values.setdefault("BRANCH", "main")
     values.setdefault("SOURCE_PREFIX", "src/")
     prefixes = [p.strip() for p in values["SOURCE_PREFIX"].split(",") if p.strip()]
-    bad = [p for p in prefixes if not SOURCE_PREFIX_RE.fullmatch(p)]
+    # A prefix is compared with the start of each changed path, so `src` would also match
+    # `src-old/`. Each one must therefore end in a slash.
+    bad = [p for p in prefixes if not SOURCE_PREFIX_RE.fullmatch(p) or not p.endswith("/")]
     if bad or not prefixes:
         raise SystemExit(
-            "error: SOURCE_PREFIX must be folders such as src/ or cmd/,internal/ "
-            "(letters, digits, dots, dashes, underscores and slashes only); "
+            "error: SOURCE_PREFIX must be folders ending in a slash, such as src/ or "
+            "cmd/,internal/ (letters, digits, dots, dashes, underscores and slashes only); "
             f"got {values['SOURCE_PREFIX']!r}"
         )
     values["SOURCE_ARGS"] = " ".join(f"--source '{p}'" for p in prefixes)

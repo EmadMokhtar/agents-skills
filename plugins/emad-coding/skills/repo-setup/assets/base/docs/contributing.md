@@ -109,10 +109,10 @@ them by hand when you change what they cover:
 <!-- @endif -->
 <!-- @endif -->
 <!-- @if security -->
-| `just scan-tree` | Known vulnerabilities, secrets and bad configuration, with Trivy. It needs Docker. |
+| `just scan-tree` | Known vulnerabilities, secrets and bad configuration, with Trivy. It needs the `trivy` program. |
 <!-- @endif -->
 <!-- @if container -->
-| `just scan-image` | The built image, with Trivy. It needs Docker. |
+| `just scan-image` | The built image, with Trivy. It needs Docker and the `trivy` program. |
 <!-- @endif -->
 
 Add your language's own checks to the `check` recipe in the `justfile`, for example `test`,

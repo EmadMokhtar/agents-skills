@@ -115,6 +115,9 @@ jobs:
       - name: Scan the latest published image
         run: |
           image="ghcr.io/${GITHUB_REPOSITORY,,}:latest"
+          # Log in first: without it the check below fails for a private image, and the scan
+          # would be skipped every night as if no image existed.
+          docker login ghcr.io -u "$TRIVY_USERNAME" --password-stdin <<< "$TRIVY_PASSWORD" >/dev/null
           if ! docker manifest inspect "$image" >/dev/null 2>&1; then
             echo "No image is published yet, so there is nothing to scan."
             exit 0
