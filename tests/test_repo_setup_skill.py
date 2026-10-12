@@ -656,6 +656,12 @@ def test_the_contributing_table_does_not_ask_for_docker_to_scan_the_tree(tmp_pat
     assert "Docker" not in row
 
 
+@pytest.mark.parametrize("url", ['https://x.io/"', "https://x.io/\nextra: 1", "https://x.io/\\"])
+def test_an_unsafe_site_url_is_refused(url):
+    with pytest.raises(SystemExit, match="SITE_URL"):
+        scaffold.build_values([*VALUES, f"SITE_URL={url}"], "MIT")
+
+
 def test_normal_source_folders_still_work(tmp_path):
     run_scaffold(tmp_path, ["docs-site", "docs-gates"])
     justfile = (tmp_path / "justfile").read_text()

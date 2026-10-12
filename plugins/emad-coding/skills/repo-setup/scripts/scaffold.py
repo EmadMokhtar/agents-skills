@@ -96,7 +96,7 @@ PYTHON_MARKERS = ("pyproject.toml", "uv.lock", "requirements.txt", "setup.py", "
 
 REQUIRED = ("NAME", "SLUG", "DESCRIPTION", "OWNER", "AUTHOR")
 # Free text lands inside "double quotes" in YAML and TOML, so these characters are refused.
-FREE_TEXT = ("NAME", "DESCRIPTION", "AUTHOR", "SOURCE_PREFIX")
+FREE_TEXT = ("NAME", "DESCRIPTION", "AUTHOR", "SOURCE_PREFIX", "SITE_URL")
 UNSAFE_TEXT_RE = re.compile(r'["\\\r\n]')
 # The patterns are used with fullmatch: `$` would accept a trailing line break.
 # SLUG and OWNER end up in URLs and names, so they cannot hold a slash. A branch name can.
