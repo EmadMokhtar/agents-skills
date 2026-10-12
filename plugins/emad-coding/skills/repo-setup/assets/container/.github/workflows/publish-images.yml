@@ -13,6 +13,13 @@ on:
         description: The released version, without the leading v.
         required: true
         type: string
+  # Lets you publish the images of a release by hand, for example after the first attempt failed.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The released version, without the leading v.
+        required: true
+        type: string
 
 permissions: {}
 

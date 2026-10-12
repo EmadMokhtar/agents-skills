@@ -88,7 +88,9 @@ MODULES: dict[str, tuple[str, tuple[str, ...]]] = {
 #   licensed  true unless --license none
 #   uv        true with --toolchain uv
 #   native    true with --toolchain native
-PSEUDO_MODULES = ("licensed", "uv", "native")
+#   ciextras  true when docs-gates, security or container is installed: CI then runs gates
+#             that need GitHub or the network and so are not part of `just check`
+PSEUDO_MODULES = ("licensed", "uv", "native", "ciextras")
 TOOLCHAINS = ("auto", "uv", "native")
 PYTHON_MARKERS = ("pyproject.toml", "uv.lock", "requirements.txt", "setup.py", "Pipfile")
 
@@ -97,6 +99,8 @@ REQUIRED = ("NAME", "SLUG", "DESCRIPTION", "OWNER", "AUTHOR")
 FREE_TEXT = ("NAME", "DESCRIPTION", "AUTHOR", "SOURCE_PREFIX")
 UNSAFE_TEXT_RE = re.compile(r'["\\\r\n]')
 IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+# A source folder is written into a shell command, so it may hold path characters only.
+SOURCE_PREFIX_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
 PLACEHOLDER_RE = re.compile(r"__([A-Z][A-Z0-9_]*)__")
 MARKER_RE = re.compile(
     r"^\s*(?:#|<!--)\s*@(?P<kind>if|else|endif)(?:\s+(?P<module>[a-z][a-z-]*))?\s*(?:-->)?\s*$"
@@ -145,6 +149,13 @@ def build_values(pairs: list[str], license_id: str) -> dict[str, str]:
     values.setdefault("BRANCH", "main")
     values.setdefault("SOURCE_PREFIX", "src/")
     prefixes = [p.strip() for p in values["SOURCE_PREFIX"].split(",") if p.strip()]
+    bad = [p for p in prefixes if not SOURCE_PREFIX_RE.match(p)]
+    if bad or not prefixes:
+        raise SystemExit(
+            "error: SOURCE_PREFIX must be folders such as src/ or cmd/,internal/ "
+            "(letters, digits, dots, dashes, underscores and slashes only); "
+            f"got {values['SOURCE_PREFIX']!r}"
+        )
     values["SOURCE_ARGS"] = " ".join(f"--source '{p}'" for p in prefixes)
     values["SOURCE_TEXT"] = " or ".join(f"`{p}`" for p in prefixes)
     values.setdefault("SITE_URL", f"https://{values['OWNER'].lower()}.github.io/{values['SLUG']}/")
@@ -200,6 +211,21 @@ def plan(modules: list[str], license_id: str, skip: list[str]) -> list[tuple[Pat
     return [(src, rel) for src, rel in pairs if not any(fnmatch.fnmatch(rel, pat) for pat in skip)]
 
 
+def symlink_in_path(target: Path, rel: str) -> str | None:
+    """The first symlink on the way from `target` to `rel`, or None.
+
+    `Path.exists()` is False for a dangling symlink, and `write_text` follows the link, so a
+    check that relies on `exists()` could write outside the repository. Any symlink on the path,
+    in the file or in a parent folder, is refused.
+    """
+    current = target
+    for part in Path(rel).parts:
+        current = current / part
+        if current.is_symlink():
+            return current.relative_to(target).as_posix()
+    return None
+
+
 def apply(
     target: Path,
     pairs: list[tuple[Path, str]],
@@ -220,6 +246,16 @@ def apply(
     )
     if bad:
         raise SystemExit("error: placeholders with no value:\n  " + "\n  ".join(bad))
+    linked = sorted(
+        f"{rel} (through {link})"
+        for _, rel, body in rendered
+        if body.strip() and (link := symlink_in_path(target, rel))
+    )
+    if linked:
+        raise SystemExit(
+            "error: refusing to write through a symlink; nothing was written:\n  "
+            + "\n  ".join(linked)
+        )
 
     results: list[Result] = []
     diffs: list[str] = []
@@ -304,6 +340,8 @@ def main(argv: list[str] | None = None) -> int:
 
     toolchain = detect_toolchain(args.target) if args.toolchain == "auto" else args.toolchain
     flags = {*chosen, toolchain}
+    if {"docs-gates", "security", "container"} & set(chosen):
+        flags.add("ciextras")
     if args.license != "none":
         flags.add("licensed")
 

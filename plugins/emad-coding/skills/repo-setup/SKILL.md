@@ -20,8 +20,10 @@ license: MIT
 This skill gives a repository the same foundation as PyFR, Emad's service template. The
 foundation does not depend on the language. It rests on five rules:
 
-1. **One definition of "the checks".** `just check` runs everything. CI runs the same recipe, so a
-   failure in CI can be reproduced with one command.
+1. **One definition of "the checks".** `just check` runs every check that works on one machine, and
+   CI's `checks` job runs the same recipe, so a failure there can be reproduced with one command.
+   The few gates that need GitHub or the network have their own recipes and are named in the
+   contributing guide.
 2. **Releases come from commits.** Every commit message and pull request title is a Conventional
    Commit. commitizen reads them, picks the version, writes the changelog, and tags the release.
 3. **Documentation ships with the change.** The docs site, decision records and docs gates keep

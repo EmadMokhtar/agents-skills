@@ -15,8 +15,12 @@ right.
 
 ## Decision
 
-`just check` is the one definition of "the checks". The CI workflow runs `just check` and
-nothing else for the checks. A new check is a new recipe that `check` depends on.
+`just check` is the one definition of "the checks". The `checks` job in CI runs `just check` and
+nothing else. A new check is a new recipe that `check` depends on.
+
+A few gates need GitHub or the network: they compare a pull request with its base branch, call a
+GitHub service, or fetch a vulnerability database. They run in their own CI jobs and have their
+own recipes, and the contributing guide lists them. They are the only exception.
 
 ## Alternatives considered
 
@@ -29,5 +33,5 @@ nothing else for the checks. A new check is a new recipe that `check` depends on
 
 - A failure in CI can be reproduced with one command.
 - Workflows stay short, and CI changes are mostly changes to the `justfile`.
-- A check that needs something CI provides itself, such as the `lychee` program, is the one
-  accepted exception. It runs in its own job, and this record should mention it.
+- A green `just check` does not cover those gates, so the contributing guide names them and the
+  recipe that runs each by hand.

@@ -69,8 +69,25 @@ and they reject a commit message that is not a Conventional Commit.
 
 ## The checks
 
-`just check` runs every check that CI runs, with the same command. If it passes on your machine,
-CI passes too.
+`just check` runs every check that works on your machine alone, and the `checks` job in CI runs
+the same recipe. If it passes on your machine, that job passes too.
+<!-- @if ciextras -->
+
+CI also runs gates that need GitHub or the network. They are not part of `just check`, so run
+them by hand when you change what they cover:
+
+<!-- @if docs-gates -->
+- `docs-updated` and `docs-warnings` compare a pull request with its base branch, so they run
+  on pull requests. By hand: `just docs-updated` and `just docs-freshness`. The `links` job needs
+  the network: `just links`.
+<!-- @endif -->
+<!-- @if security -->
+- `dependency-review` runs on GitHub only. `scan-tree` needs Trivy and the network: `just scan-tree`.
+<!-- @endif -->
+<!-- @if container -->
+- `build` and `scan` build the image: `just build-multiarch` and `just scan-image`.
+<!-- @endif -->
+<!-- @endif -->
 
 | Recipe | What it checks |
 | --- | --- |

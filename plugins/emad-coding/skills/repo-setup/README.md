@@ -31,7 +31,9 @@ to delete. The licence is a separate choice: with `--license none` the skill wri
 
 ## The ideas behind it
 
-- **One definition of "the checks".** `just check` runs everything, and CI runs the same recipe.
+- **One definition of "the checks".** `just check` runs every check that works on one machine, and
+  CI's main job runs the same recipe. The few gates that need GitHub or the network have their own
+  recipes, and the contributing guide lists them.
 - **Releases come from commits.** Every commit and pull request title is a
   [Conventional Commit](https://www.conventionalcommits.org/). commitizen picks the version,
   writes the changelog, and tags the release. The version is the git tag, so it works for every

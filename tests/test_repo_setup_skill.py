@@ -7,6 +7,7 @@ pinned by commit SHA and every workflow starts with `permissions: {}`.
 from __future__ import annotations
 
 import importlib.util
+import os
 import re
 import shutil
 import subprocess
@@ -606,3 +607,173 @@ def test_the_listing_counts_the_adr_records_correctly(capsys):
 def test_no_yaml_library_is_required_for_the_docs_scripts(tmp_path):
     run_scaffold(tmp_path, ["docs-site", "docs-gates"], "--toolchain", "uv")
     assert "yaml" not in (tmp_path / "pyproject.toml").read_text().lower()
+
+
+# --- review findings: shell safety, symlinks, honest CI wording, release repair -------------
+
+
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "src/'; touch /tmp/pwned; '",
+        "src/ && rm -rf /",
+        "$(id)/",
+        "`id`/",
+        "a b/",
+        'src/"x',
+        "",
+        ",",
+    ],
+)
+def test_a_source_folder_with_shell_characters_is_refused(tmp_path, prefix):
+    args = [str(tmp_path), "--modules", "docs-site,docs-gates", "--set", f"SOURCE_PREFIX={prefix}"]
+    for pair in VALUES:
+        args += ["--set", pair]
+    with pytest.raises(SystemExit, match="SOURCE_PREFIX|double quote"):
+        scaffold.main(args)
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_normal_source_folders_still_work(tmp_path):
+    run_scaffold(tmp_path, ["docs-site", "docs-gates"])
+    justfile = (tmp_path / "justfile").read_text()
+    assert "--source 'src/'" in justfile
+
+
+def test_a_dangling_symlink_is_not_written_through(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "README.md").symlink_to(outside / "stolen.md")  # dangling: the target is missing
+    with pytest.raises(SystemExit, match="symlink"):
+        run_scaffold(repo, [])
+    assert not (outside / "stolen.md").exists()
+    assert not (repo / "justfile").exists()  # nothing was written before the refusal
+
+
+def test_a_symlinked_parent_folder_is_not_written_through(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "docs").symlink_to(outside, target_is_directory=True)
+    with pytest.raises(SystemExit, match="symlink"):
+        run_scaffold(repo, [])
+    assert list(outside.iterdir()) == []
+
+
+def test_a_symlinked_gitignore_is_not_appended_to(tmp_path):
+    target_file = tmp_path / "elsewhere.txt"
+    target_file.write_text("keep\n")
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".gitignore").symlink_to(target_file)
+    with pytest.raises(SystemExit, match="symlink"):
+        run_scaffold(repo, [])
+    assert target_file.read_text() == "keep\n"
+
+
+def test_ci_only_gates_are_named_in_the_contributing_guide(rendered):
+    _, modules, root = rendered
+    guide = (root / "docs" / "contributing.md").read_text()
+    justfile = (root / "justfile").read_text()
+    extras = {"docs-gates": "docs-updated", "security": "scan-tree", "container": "scan-image"}
+    chosen = [module for module in extras if module in modules]
+    assert ("CI also runs gates that need GitHub or the network" in guide) == bool(chosen)
+    assert ("CI also runs gates that need GitHub" in justfile) == bool(chosen)
+    for module, recipe in extras.items():
+        assert (f"`just {recipe}`" in guide or recipe in guide) == (module in modules), module
+
+
+def release_workflow(root: Path) -> dict:
+    return yaml.safe_load((root / ".github" / "workflows" / "release.yml").read_text())
+
+
+def test_the_release_can_be_repaired_by_running_it_by_hand(tmp_path):
+    run_scaffold(tmp_path, ["release", "security", "container"], "--toolchain", "native")
+    workflow = release_workflow(tmp_path)
+    assert "workflow_dispatch" in workflow[True]  # PyYAML reads the key `on` as True
+    job = workflow["jobs"]["release"]
+    assert set(job["outputs"]) == {"published", "version"}
+    publish = next(step for step in job["steps"] if step.get("id") == "publish")
+    assert "gh release view" in publish["run"]
+    assert "git describe --tags" in publish["run"]
+    assert workflow["jobs"]["publish-images"]["if"] == "needs.release.outputs.published == 'true'"
+    images = yaml.safe_load((tmp_path / ".github" / "workflows" / "publish-images.yml").read_text())
+    assert "workflow_dispatch" in images[True]
+    assert images[True]["workflow_dispatch"]["inputs"]["version"]["required"] is True
+
+
+@pytest.fixture
+def release_repo(tmp_path):
+    """A repository with a tag, a fake `gh`, and the publish step of release.yml."""
+    run_scaffold(tmp_path, ["release"], "--toolchain", "native")
+    step = next(
+        step
+        for step in release_workflow(tmp_path)["jobs"]["release"]["steps"]
+        if step.get("id") == "publish"
+    )
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    gh = bin_dir / "gh"
+    gh.write_text(
+        "#!/bin/sh\n"
+        'echo "$@" >> "$FAKE_GH_LOG"\n'
+        'if [ "$1 $2" = "release view" ]; then [ "$FAKE_RELEASE_EXISTS" = "yes" ]; exit $?; fi\n'
+        "exit 0\n"
+    )
+    gh.chmod(0o755)
+    git = ["git", "-c", "user.name=t", "-c", "user.email=t@t.t"]
+    subprocess.run(["git", "init", "-q", "-b", "main"], cwd=tmp_path, check=True)
+    subprocess.run(
+        [*git, "commit", "-q", "--allow-empty", "-m", "feat: first"], cwd=tmp_path, check=True
+    )
+    return tmp_path, step["run"], bin_dir
+
+
+def run_publish(release_repo, *, bumped: str, version: str = "", exists: str = "no", tag: str = ""):
+    root, script, bin_dir = release_repo
+    if tag:
+        subprocess.run(["git", "tag", tag], cwd=root, check=True)
+    output = root / "output.txt"
+    log = root / "gh.log"
+    output.write_text("")
+    log.write_text("")
+    env = {
+        **os.environ,
+        "PATH": f"{bin_dir}:{os.environ['PATH']}",
+        "CZ": "echo",
+        "GITHUB_OUTPUT": str(output),
+        "FAKE_GH_LOG": str(log),
+        "FAKE_RELEASE_EXISTS": exists,
+        "BUMPED": bumped,
+        "BUMPED_VERSION": version,
+        "GH_TOKEN": "x",
+    }
+    subprocess.run(["bash", "-e", "-c", script], cwd=root, env=env, check=True, capture_output=True)
+    return output.read_text(), log.read_text()
+
+
+def test_publish_creates_the_release_after_a_bump(release_repo):
+    output, log = run_publish(release_repo, bumped="true", version="0.2.0")
+    assert "published=true" in output and "version=0.2.0" in output
+    assert "release create v0.2.0" in log
+
+
+def test_publish_repairs_a_tag_that_has_no_release(release_repo):
+    output, log = run_publish(release_repo, bumped="false", tag="v0.1.0")
+    assert "published=true" in output and "version=0.1.0" in output
+    assert "release create v0.1.0" in log
+
+
+def test_publish_does_nothing_when_the_release_exists(release_repo):
+    output, log = run_publish(release_repo, bumped="false", tag="v0.1.0", exists="yes")
+    assert "published=false" in output
+    assert "release create" not in log
+
+
+def test_publish_does_nothing_before_the_first_tag(release_repo):
+    output, log = run_publish(release_repo, bumped="false")
+    assert "published=false" in output
+    assert "release create" not in log

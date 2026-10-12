@@ -75,6 +75,8 @@ changelog entry. Both change nothing.
 | Symptom | Cause and fix |
 | --- | --- |
 | `The push was refused` in the Release job | The branch is protected. Add `RELEASE_TOKEN`, and let its owner bypass the ruleset. |
+| The Release job failed after the tag was pushed, so there is a tag but no GitHub Release | Run the Release workflow by hand (Actions, Release, Run workflow). It finds the newest tag, sees that it has no GitHub Release, and creates it. With `container`, it also publishes the images. Pushes are skipped on purpose after a `bump:` commit, so waiting does not help. |
+| The images were not published, but the GitHub Release exists | Run the Publish images workflow by hand, with the version. |
 | No release after a merge | Every commit since the last tag is `docs`, `chore`, `ci` or similar. A change to behaviour should have been `feat` or `fix`. Fix the habit; rewriting history is not needed. |
 | A release was skipped for a `feat` | The pull request title was not a Conventional Commit, so the squash commit hid it. The `pr-title` check exists to prevent this. |
 | `[NO_COMMITS_TO_BUMP]` locally | Exit code 21. Not an error. |

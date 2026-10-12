@@ -4,10 +4,16 @@ name: Release
 # push it looks at the commits since the last tag. If any of them can be released (`feat`,
 # `fix`, or a breaking change), it picks the next version, writes CHANGELOG.md, commits that
 # as `bump: ...`, tags it, and publishes a GitHub Release.
+#
+# A release has two steps that can fail separately: pushing the tag, and creating the GitHub
+# Release. If the second fails, the tag exists and the bump commit is the newest commit, so
+# pushes are skipped and a normal run finds nothing to bump. Run this workflow by hand
+# (Actions, Release, Run workflow). It then finds the newest tag, sees that it has no GitHub
+# Release, and creates it.
 on:
   push:
     branches: [__BRANCH__]
-  # Allows a release without a code change.
+  # Allows a release without a code change, and repairs a release that stopped half way.
   workflow_dispatch:
 
 permissions: {}
@@ -28,8 +34,9 @@ jobs:
     permissions:
       contents: write
     outputs:
-      released: ${{ steps.bump.outputs.released }}
-      version: ${{ steps.bump.outputs.version }}
+      # "true" when this run created a GitHub Release, whether for a new bump or to repair one.
+      published: ${{ steps.publish.outputs.published }}
+      version: ${{ steps.publish.outputs.version }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -87,18 +94,38 @@ jobs:
             exit 1
           fi
       - name: Publish the GitHub Release
-        if: steps.bump.outputs.released == 'true'
+        id: publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.bump.outputs.version }}
+          BUMPED: ${{ steps.bump.outputs.released }}
+          BUMPED_VERSION: ${{ steps.bump.outputs.version }}
         run: |
-          $CZ changelog "v${VERSION}" --dry-run > release-notes.md
-          gh release create "v${VERSION}" --title "v${VERSION}" --notes-file release-notes.md
+          # After a bump, release that version. Otherwise look at the newest tag: an earlier run
+          # may have pushed it and then failed to create the GitHub Release.
+          if [ "$BUMPED" = "true" ]; then
+            tag="v${BUMPED_VERSION}"
+          else
+            tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
+          fi
+          if [ -z "$tag" ]; then
+            echo "No tag exists yet, so there is no release to publish."
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "The GitHub Release $tag already exists. Nothing to do."
+            echo "published=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          $CZ changelog "$tag" --dry-run > release-notes.md
+          gh release create "$tag" --title "$tag" --notes-file release-notes.md
+          echo "published=true" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 # @if container
 
   publish-images:
     needs: release
-    if: needs.release.outputs.released == 'true'
+    if: needs.release.outputs.published == 'true'
     permissions:
       contents: write
       packages: write

@@ -1,7 +1,21 @@
 # Task runner. Run `just` with no arguments to list the recipes.
 #
-# `just check` is the one definition of "the checks". CI runs the same recipe, so a green
-# `just check` on your machine means a green CI.
+# `just check` is the one definition of "the checks". CI's `checks` job runs the same recipe, so a
+# green `just check` on your machine means that job is green.
+# @if ciextras
+#
+# CI also runs gates that need GitHub or the network. They are separate recipes, so run them
+# by hand when you change what they cover:
+# @if docs-gates
+#   docs-updated and docs-freshness (they compare a pull request with its base branch), links
+# @endif
+# @if security
+#   scan-tree (dependency-review runs only on GitHub)
+# @endif
+# @if container
+#   build-multiarch and scan-image
+# @endif
+# @endif
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
 # @if docs-site
