@@ -329,6 +329,12 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("TARGET is required")
     if not args.target.is_dir():
         raise SystemExit(f"error: {args.target} is not a folder")
+    if args.target.is_symlink():
+        # is_dir() follows a symlink, and the checks in apply() look only below the target.
+        raise SystemExit(
+            f"error: {args.target} is a symlink; nothing was written. "
+            f"Pass the real folder instead: {args.target.resolve()}"
+        )
 
     chosen = ["base", *[m for m in args.modules.split(",") if m and m != "base"]]
     for module in chosen:

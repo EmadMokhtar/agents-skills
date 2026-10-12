@@ -777,3 +777,20 @@ def test_publish_does_nothing_before_the_first_tag(release_repo):
     output, log = run_publish(release_repo, bumped="false")
     assert "published=false" in output
     assert "release create" not in log
+
+
+def test_a_symlinked_target_folder_is_refused(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    link = tmp_path / "repo"
+    link.symlink_to(outside, target_is_directory=True)
+    with pytest.raises(SystemExit, match="is a symlink") as error:
+        run_scaffold(link, [])
+    assert str(outside.resolve()) in str(error.value)  # it names the real folder
+    assert list(outside.iterdir()) == []
+
+
+def test_a_normal_target_and_a_relative_dot_still_work(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    run_scaffold(Path("."), [])
+    assert (tmp_path / "justfile").is_file()
