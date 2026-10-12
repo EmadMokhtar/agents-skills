@@ -3,7 +3,8 @@
 # See https://commitizen-tools.github.io/commitizen/config/configuration_file/
 [tool.commitizen]
 name = "cz_conventional_commits"
-# The version is the newest git tag, so no file has to store it.
+# The version is the newest git tag, so no file has to store it. `scm` only reads the tag; `cz bump`
+# still creates the next tag and writes the changelog.
 version_provider = "scm"
 tag_format = "v$version"
 update_changelog_on_bump = true

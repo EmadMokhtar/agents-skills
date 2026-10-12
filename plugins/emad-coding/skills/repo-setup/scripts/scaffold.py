@@ -98,9 +98,12 @@ REQUIRED = ("NAME", "SLUG", "DESCRIPTION", "OWNER", "AUTHOR")
 # Free text lands inside "double quotes" in YAML and TOML, so these characters are refused.
 FREE_TEXT = ("NAME", "DESCRIPTION", "AUTHOR", "SOURCE_PREFIX")
 UNSAFE_TEXT_RE = re.compile(r'["\\\r\n]')
-IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")
+# The patterns are used with fullmatch: `$` would accept a trailing line break.
+# SLUG and OWNER end up in URLs and names, so they cannot hold a slash. A branch name can.
+IDENTIFIER_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*")
+BRANCH_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9._/-]*")
 # A source folder is written into a shell command, so it may hold path characters only.
-SOURCE_PREFIX_RE = re.compile(r"^[A-Za-z0-9._/-]+$")
+SOURCE_PREFIX_RE = re.compile(r"[A-Za-z0-9._/-]+")
 PLACEHOLDER_RE = re.compile(r"__([A-Z][A-Z0-9_]*)__")
 MARKER_RE = re.compile(
     r"^\s*(?:#|<!--)\s*@(?P<kind>if|else|endif)(?:\s+(?P<module>[a-z][a-z-]*))?\s*(?:-->)?\s*$"
@@ -140,16 +143,19 @@ def build_values(pairs: list[str], license_id: str) -> dict[str, str]:
             raise SystemExit(
                 f"error: {key} must not contain a double quote, a backslash or a line break"
             )
-    for key in ("SLUG", "OWNER", "BRANCH"):
-        if key in values and not IDENTIFIER_RE.match(values[key]):
-            raise SystemExit(f"error: {key} must be letters, digits, dots, dashes or underscores")
+    for key, pattern in (("SLUG", IDENTIFIER_RE), ("OWNER", IDENTIFIER_RE), ("BRANCH", BRANCH_RE)):
+        if key in values and not pattern.fullmatch(values[key]):
+            allowed = "letters, digits, dots, dashes, underscores" + (
+                " and slashes" if pattern is BRANCH_RE else ""
+            )
+            raise SystemExit(f"error: {key} must be {allowed}")
     today = dt.date.today()
     values.setdefault("YEAR", str(today.year))
     values.setdefault("TODAY", today.isoformat())
     values.setdefault("BRANCH", "main")
     values.setdefault("SOURCE_PREFIX", "src/")
     prefixes = [p.strip() for p in values["SOURCE_PREFIX"].split(",") if p.strip()]
-    bad = [p for p in prefixes if not SOURCE_PREFIX_RE.match(p)]
+    bad = [p for p in prefixes if not SOURCE_PREFIX_RE.fullmatch(p)]
     if bad or not prefixes:
         raise SystemExit(
             "error: SOURCE_PREFIX must be folders such as src/ or cmd/,internal/ "
@@ -335,6 +341,9 @@ def main(argv: list[str] | None = None) -> int:
             f"error: {args.target} is a symlink; nothing was written. "
             f"Pass the real folder instead: {args.target.resolve()}"
         )
+    # A link higher up the path (/tmp is one on macOS) is the caller's choice. Resolving it once
+    # means every write and every symlink check below happens under the real folder.
+    args.target = args.target.resolve()
 
     chosen = ["base", *[m for m in args.modules.split(",") if m and m != "base"]]
     for module in chosen:

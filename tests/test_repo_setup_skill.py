@@ -790,6 +790,39 @@ def test_a_symlinked_target_folder_is_refused(tmp_path):
     assert list(outside.iterdir()) == []
 
 
+@pytest.mark.parametrize(
+    "pair",
+    ["OWNER=org/team", "SLUG=a/b", "SLUG=tidal\n", "OWNER=org\n", "BRANCH=main\n", "BRANCH=/main"],
+)
+def test_github_fields_are_matched_in_full_and_only_a_branch_may_hold_a_slash(pair):
+    with pytest.raises(SystemExit, match="must be letters"):
+        scaffold.build_values([*VALUES, pair], "MIT")
+
+
+def test_a_branch_with_a_slash_is_accepted():
+    assert scaffold.build_values([*VALUES, "BRANCH=release/1.x"], "MIT")["BRANCH"] == "release/1.x"
+
+
+def test_a_symlink_higher_up_the_path_is_resolved_and_writes_stay_in_the_real_folder(tmp_path):
+    real = tmp_path / "real"
+    (real / "repo").mkdir(parents=True)
+    (tmp_path / "link").symlink_to(real, target_is_directory=True)
+    assert run_scaffold(tmp_path / "link" / "repo", []) == 0
+    assert (real / "repo" / "justfile").is_file()
+
+
+def test_a_symlink_inside_a_target_reached_through_a_linked_parent_is_still_refused(tmp_path):
+    real = tmp_path / "real"
+    (real / "repo").mkdir(parents=True)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (real / "repo" / "docs").symlink_to(outside, target_is_directory=True)
+    (tmp_path / "link").symlink_to(real, target_is_directory=True)
+    with pytest.raises(SystemExit, match="symlink"):
+        run_scaffold(tmp_path / "link" / "repo", [])
+    assert list(outside.iterdir()) == []
+
+
 def test_a_normal_target_and_a_relative_dot_still_work(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
     run_scaffold(Path("."), [])

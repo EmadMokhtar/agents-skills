@@ -37,7 +37,8 @@ The first release of a new repository is `v0.1.0`, made by the first `feat` or `
 
 The generated commitizen settings (in `pyproject.toml` with the `uv` toolchain, in `.cz.toml` with
 `native`) use `version_provider = "scm"`. The version is the newest git tag,
-so no file stores it, and the setup works for every language. Keep it unless the repository
+so no file stores it, and the setup works for every language. `scm` only reads the version;
+`cz bump` still creates the tag and writes the changelog. Keep it unless the repository
 already stores its version in a file that other tools read:
 
 | The repository has | Set `version_provider` to | commitizen also updates |
