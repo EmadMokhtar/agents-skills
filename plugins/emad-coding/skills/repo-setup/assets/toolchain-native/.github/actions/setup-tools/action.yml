@@ -54,6 +54,8 @@ runs:
           go install github.com/rhysd/actionlint/cmd/actionlint@v1.7.12
         fi
         if [ "$GITLEAKS" = "true" ]; then
+          # Keep the zricethezav path: the go.mod of v8.30.1 still declares it, and the
+          # gitleaks/gitleaks path fails with "module declares its path as ...".
           go install github.com/zricethezav/gitleaks/v8@v8.30.1
         fi
         if [ "$EDITORCONFIG" = "true" ]; then

@@ -19,6 +19,10 @@ updates:
 # @endif
   # The pinned actions in .github/workflows. Each action is pinned by commit SHA, and
   # Dependabot moves the SHA and the version comment together.
+# @if native
+  # `directories` is valid for this ecosystem. The second folder holds the local composite action,
+  # and `/` alone would not reach it: Dependabot reads each listed folder's own action.yml.
+# @endif
   - package-ecosystem: "github-actions"
     directories:
       - "/"
