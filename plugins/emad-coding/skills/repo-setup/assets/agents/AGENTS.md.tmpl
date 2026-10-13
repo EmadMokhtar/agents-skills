@@ -1,0 +1,52 @@
+# Agent instructions
+
+__DESCRIPTION__
+
+<!-- Add this repository's own layout and naming rules here, under a "Layout rules" heading. -->
+
+## Commands
+
+<!-- @if uv -->
+- `just install` installs the tools and the git hooks.
+<!-- @else -->
+- `just install` turns on the git hooks in `.githooks` and lists any tool you still need to install.
+<!-- @endif -->
+- `just check` runs every check that CI runs. It must pass before you finish.
+- `just` lists every recipe.
+
+## Commits and pull requests
+
+- Commit messages and pull request titles follow
+  [Conventional Commits](https://www.conventionalcommits.org/): `<type>[scope][!]: <description>`.
+  Types: `feat`, `fix`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`, `chore`, `style`,
+  `revert`. The description is lowercase, in the imperative mood, with no final period.
+- A pull request is squash-merged, so its title becomes the commit on `__BRANCH__`.
+<!-- @if release -->
+  commitizen reads that commit to choose the next version: `feat` raises the minor number, `fix`
+  the patch number, and `!` or a `BREAKING CHANGE:` footer marks a breaking change. `docs`,
+  `chore`, `ci`, `build`, `test`, `style` and `refactor` do not cause a release.
+<!-- @else -->
+  The release tool reads that commit to choose the next version.
+<!-- @endif -->
+- A change to what the software does is `feat` or `fix`, even when the file is Markdown.
+<!-- @if release -->
+- Never edit `CHANGELOG.md` or a version number by hand. The release workflow writes both.
+<!-- @endif -->
+
+## Writing
+
+- Write comments, documentation and commit messages in simple, direct English. Use short
+  sentences. Avoid idioms. Expand each acronym the first time it appears.
+- Documentation ships in the same change as the code, in `docs/` and `README.md`.
+<!-- @if adr -->
+- Decision records in `docs/adr/` are never edited after they are accepted. A changed
+  decision is a new record that supersedes the old one.
+<!-- @endif -->
+
+## GitHub Actions
+
+- Pin every action by full commit SHA, with the version in a comment. Dependabot keeps the
+  pins current.
+- Start every workflow with `permissions: {}`. Each job asks only for what it needs.
+- A workflow runs `just <recipe>` instead of repeating the commands, so CI and a laptop run
+  the same thing.

@@ -1,0 +1,212 @@
+# Task runner. Run `just` with no arguments to list the recipes.
+#
+# `just check` is the one definition of "the checks". CI's `checks` job runs the same recipe, so a
+# green `just check` on your machine means that job is green.
+# @if ciextras
+#
+# CI also runs gates that need GitHub or the network. They are separate recipes, so run them
+# by hand when you change what they cover:
+# @if docs-gates
+#   docs-updated and docs-freshness (they compare a pull request with its base branch), links
+# @endif
+# @if security
+#   scan-tree (dependency-review runs only on GitHub)
+# @endif
+# @if container
+#   build-multiarch and scan-image
+# @endif
+# @endif
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# @if docs-site
+# MkDocs Material prints a long notice about MkDocs 2.0 on every build. It is a notice,
+# not an error.
+export NO_MKDOCS_2_WARNING := "true"
+
+# @endif
+# @if container
+# The name of the image that `just build-image` builds.
+image := "__SLUG__"
+
+# @endif
+# List the recipes
+default:
+    @just --list --unsorted
+
+# @if native
+# Stops with a clear message when a tool is not installed.
+[private]
+_need tool hint:
+    @command -v {{tool}} >/dev/null || { echo "{{tool}} is not installed. Install it with: {{hint}}" >&2; exit 1; }
+
+# Turn on the git hooks in .githooks (commit message check, secret scan), then check the tools
+install: && doctor
+    git config core.hooksPath .githooks
+
+# Check that every tool the recipes need is installed
+doctor:
+    #!/usr/bin/env bash
+    missing=0
+    check() {
+        if command -v "$1" >/dev/null 2>&1; then
+            printf 'ok       %s\n' "$1"
+        else
+            printf 'MISSING  %-22s install: %s\n' "$1" "$2"
+            missing=1
+        fi
+    }
+    check actionlint "brew install actionlint"
+    check gitleaks "brew install gitleaks"
+    check editorconfig-checker "brew install editorconfig-checker"
+# @if release
+    check cz "brew install commitizen"
+# @endif
+# @if docs-site
+    check mkdocs "brew install mkdocs-material"
+# @endif
+# @if docs-gates
+    check lychee "brew install lychee"
+    check python3 "brew install python"
+# @endif
+# @if security
+    check trivy "brew install trivy"
+# @endif
+# @if container
+    check docker "https://docs.docker.com/get-docker/"
+# @endif
+    exit "$missing"
+
+# Lint the GitHub Actions workflows
+lint-workflows: (_need "actionlint" "brew install actionlint")
+    actionlint
+
+# Check file endings and whitespace against .editorconfig
+hygiene: (_need "editorconfig-checker" "brew install editorconfig-checker")
+    editorconfig-checker
+
+# Scan the working tree for secrets
+secrets: (_need "gitleaks" "brew install gitleaks")
+    gitleaks dir . --redact --no-banner
+
+# Scan the staged changes for secrets. The pre-commit hook runs this.
+secrets-staged: (_need "gitleaks" "brew install gitleaks")
+    gitleaks git --pre-commit --staged --redact --no-banner
+
+# The checks the pre-commit hook would run, over every file
+precommit: hygiene secrets
+
+# @else
+# Install every dependency group and the git hooks
+install:
+    uv sync --all-groups
+    uv run pre-commit install
+
+# Lint the GitHub Actions workflows
+lint-workflows:
+    uv run actionlint
+
+# Run every pre-commit hook over every tracked file
+precommit:
+    uv run pre-commit run --all-files
+
+# @endif
+# @if release
+# Show the version the next release will have. Changes nothing.
+next-version:
+    #!/usr/bin/env bash
+    if ! git rev-parse --verify --quiet HEAD >/dev/null; then
+        echo "No commits yet, so there is nothing to release."
+        exit 0
+    fi
+    set +e
+# @if uv
+    uv run --locked --group dev cz bump --dry-run --yes
+# @else
+    cz bump --dry-run --yes
+# @endif
+    status=$?
+    # 3 means no new commits. 21 means new commits, but none can be released.
+    if [ "$status" -eq 3 ] || [ "$status" -eq 21 ]; then
+        echo "No releasable commits since the last tag."
+        exit 0
+    fi
+    exit "$status"
+
+# Show the changelog entry the next release will write. Changes nothing.
+changelog:
+# @if uv
+    uv run --locked --group dev cz changelog --dry-run --incremental
+# @else
+    cz changelog --dry-run --incremental
+# @endif
+
+# @endif
+# @if docs-site
+# Serve the documentation on http://127.0.0.1:8000 and rebuild it on save
+docs:
+# @if uv
+    uv run --group docs mkdocs serve
+# @else
+    mkdocs serve
+# @endif
+
+# Build the documentation as CI does. --strict makes every warning, such as a broken link, a failure
+docs-build:
+# @if uv
+    uv run --group docs mkdocs build --strict
+# @else
+    mkdocs build --strict
+# @endif
+
+# @endif
+# @if docs-gates
+# Fail when source code changed and no documentation did. A pull request can opt out with the
+# no-docs-needed label (CI checks the label).
+docs-updated base="origin/__BRANCH__" head="HEAD":
+    python3 scripts/check_docs_updated.py __SOURCE_ARGS__ --docs docs/ --docs README.md --docs mkdocs.yml {{base}} {{head}}
+
+# Warn about stale pages, and pages whose covered files changed. It only warns; it never fails.
+docs-freshness base="origin/__BRANCH__" head="HEAD":
+    python3 scripts/check_docs_freshness.py {{base}} {{head}}
+
+# Check the external links. Needs the lychee program (`brew install lychee`).
+links:
+    lychee --config lychee.toml --no-progress 'docs/**/*.md' README.md
+
+# @endif
+# @if security
+# Scan the whole tree for known vulnerabilities, secrets and bad configuration. Needs Trivy.
+scan-tree:
+    trivy fs --ignorefile ops/trivy/.trivyignore.yaml --severity HIGH,CRITICAL --ignore-unfixed \
+        --scanners vuln,secret,misconfig --skip-dirs '**/.venv,**/node_modules,**/site' \
+        --exit-code 1 --no-progress .
+
+# @endif
+# @if container
+# Build the image for this machine and load it into Docker
+build-image:
+    docker build --load -t {{image}}:ci .
+
+# Build for amd64 and arm64 without loading or pushing. It proves the Dockerfile works on both.
+build-multiarch:
+    docker buildx inspect {{image}} >/dev/null 2>&1 \
+        || docker buildx create --name {{image}} --driver docker-container
+    docker buildx build --builder {{image}} --platform linux/amd64,linux/arm64 .
+
+# Scan the image. A finding with a fix available fails the scan.
+scan-image: build-image
+    trivy image --ignorefile ops/trivy/.trivyignore.yaml --severity HIGH,CRITICAL \
+        --ignore-unfixed --exit-code 1 --scanners vuln,secret --no-progress {{image}}:ci
+
+# Write the software bill of materials (SBOM: the list of everything inside the image)
+sbom: build-image
+    mkdir -p sbom
+    trivy image --format cyclonedx --no-progress --output sbom/{{image}}.cdx.json {{image}}:ci
+
+# @endif
+# Everything CI checks. Add your language's own gates here, such as `test` or `lint`.
+# @if docs-site
+check: lint-workflows precommit docs-build
+# @else
+check: lint-workflows precommit
+# @endif

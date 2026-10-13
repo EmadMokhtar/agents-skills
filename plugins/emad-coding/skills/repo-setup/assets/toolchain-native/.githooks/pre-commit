@@ -1,0 +1,14 @@
+#!/bin/sh
+# Runs before each commit: whitespace errors and conflict markers in the staged changes,
+# then a secret scan.
+# Turn the hooks on with `just install`.
+set -eu
+
+git diff --cached --check
+
+# The staged-changes scan compares with the last commit. The very first commit has none to
+# compare with and the scan would look at nothing, so scan the whole working tree instead.
+if git rev-parse --verify --quiet HEAD >/dev/null; then
+    exec just secrets-staged
+fi
+exec just secrets

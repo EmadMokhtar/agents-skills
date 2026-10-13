@@ -1,0 +1,15 @@
+# https://editorconfig.org
+# `just hygiene` checks every file against these rules.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{yml,yaml,json,toml,md}]
+indent_style = space
+
+[{Makefile,*.go,*.mk}]
+indent_style = tab
