@@ -40,7 +40,7 @@ jobs:
           # `git diff base...head` needs both sides of the history.
           fetch-depth: 0
           persist-credentials: false
-      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7  # v10.2.0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           enable-cache: true
       - name: Pick the skills to evaluate
@@ -83,13 +83,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020  # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
         with:
           node-version: "22"
       - name: Install Claude Code
         run: npm install --global @anthropic-ai/claude-code@2.1.289
       - name: Run the skill's evals through Claude Code
-        uses: EmadMokhtar/skill-evaluator@d825f48570916f86dcdc87cefbf2e3211683344e  # v0.20.0
+        uses: EmadMokhtar/skill-evaluator@781e89079996c242a3faf3e81a26f704f2b62dea  # v0.21.0
         env:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         with:
