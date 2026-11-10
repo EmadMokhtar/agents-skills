@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Job Search Kanban</title>
+<style>
+  :root{
+    --bg:#0f1115; --panel:#171a21; --panel-2:#1d212b; --line:#2a2f3a;
+    --text:#e7e9ee; --muted:#9aa3b2; --accent:#6ea8fe; --accent-2:#7ee0c0;
+    --new:#6ea8fe; --applied:#f5b971; --process:#b69bff; --rejected:#ff7b8a; --archived:#6b7280;
+    --card:#202531; --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.25);
+  }
+  @media (prefers-color-scheme: light){
+    :root{ --bg:#f4f5f8; --panel:#fff; --panel-2:#fafbfc; --line:#e4e7ee; --text:#1c2027; --muted:#5c6677; --card:#fff; --shadow:0 1px 2px rgba(20,30,60,.08),0 6px 18px rgba(20,30,60,.07);}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  header{position:sticky;top:0;z-index:10;background:var(--panel);border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  header h1{font-size:16px;margin:0;font-weight:650;letter-spacing:.2px}
+  .spacer{flex:1}
+  .btn{background:var(--panel-2);color:var(--text);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font-size:13px;cursor:pointer;transition:.15s}
+  .btn:hover{border-color:var(--accent);color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#0b1220;border-color:var(--accent);font-weight:600}
+  .btn.primary:hover{filter:brightness(1.05);color:#0b1220}
+  .status{font-size:12px;color:var(--muted)}
+  .status.ok{color:var(--accent-2)}
+  .status.warn{color:var(--rejected)}
+  .board{display:grid;gap:14px;padding:18px;align-items:start;overflow-x:auto}
+  .col{background:var(--panel);border:1px solid var(--line);border-radius:14px;display:flex;flex-direction:column;
+       height:calc(100vh - 160px);min-height:320px;overflow:hidden}
+  .col-head{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);
+            background:var(--panel);flex:none;cursor:pointer;user-select:none}
+  .col-head:hover .chev{color:var(--accent)}
+  .chev{color:var(--muted);font-size:11px;flex:none;transition:.15s}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .col-title{font-weight:600;font-size:13px;white-space:nowrap}
+  .count{margin-left:auto;background:var(--panel-2);border:1px solid var(--line);border-radius:20px;padding:1px 9px;font-size:12px;color:var(--muted);flex:none}
+  .col-body{padding:10px;display:flex;flex-direction:column;gap:10px;flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+  .col-body::-webkit-scrollbar{width:10px}
+  .col-body::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  .col-body::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:content-box}
+  /* Collapsed column: slim vertical strip, still a valid drop target */
+  .col.collapsed{height:auto;min-height:0}
+  .col.collapsed .col-head{flex-direction:column;gap:10px;padding:12px 8px;border-bottom:none;height:100%;justify-content:flex-start}
+  .col.collapsed .col-title{writing-mode:vertical-rl;transform:rotate(180deg);margin:0}
+  .col.collapsed .count{margin-left:0}
+  .col.collapsed .col-body{display:none}
+  .col.drag-over{outline:2px dashed var(--accent);outline-offset:-6px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:var(--shadow);cursor:grab;position:relative}
+  .card:active{cursor:grabbing}
+  .card.dragging{opacity:.45}
+  .card .top{display:flex;align-items:flex-start;gap:8px}
+  .card h3{margin:0;font-size:13.5px;font-weight:640;line-height:1.35}
+  .company{color:var(--muted);font-size:12.5px;margin:2px 0 8px}
+  .score{margin-left:auto;flex:none;font-size:12px;font-weight:700;border-radius:8px;padding:2px 8px;background:rgba(126,224,192,.14);color:var(--accent-2);border:1px solid rgba(126,224,192,.3)}
+  .score.low{background:rgba(245,185,113,.14);color:#f5b971;border-color:rgba(245,185,113,.3)}
+  .meta{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+  .meta b{color:var(--text);font-weight:560}
+  .tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+  .tag{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted)}
+  .plat{font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 6px;color:var(--muted);background:rgba(127,127,127,.09);font-weight:560}
+  .hc{font-size:11px;border-radius:6px;padding:1px 6px;border:1px solid transparent}
+  .hc.yes{color:#0a7d3f;background:rgba(10,125,63,.10);border-color:rgba(10,125,63,.28)}
+  .hc.no{color:#a3341f;background:rgba(163,52,31,.10);border-color:rgba(163,52,31,.28)}
+  .notedot{font-size:11px;opacity:.85}
+  .linkbtn{background:none;border:none;padding:0;font:inherit;font-size:12px;color:var(--muted);cursor:pointer;text-decoration:underline}
+  .linkbtn:hover{color:var(--text)}
+  .ro{font-size:12px;color:var(--muted);background:rgba(127,127,127,.07);border:1px solid var(--line);border-radius:8px;padding:8px 10px;line-height:1.55;white-space:pre-wrap}
+  .watch{font-size:11.5px;color:#f0a8a8;background:rgba(255,123,138,.08);border:1px solid rgba(255,123,138,.2);border-radius:8px;padding:6px 8px;margin-bottom:8px}
+  .card-actions{display:flex;align-items:center;gap:10px;font-size:12px}
+  .card-actions a{color:var(--accent);text-decoration:none}
+  .card-actions a:hover{text-decoration:underline}
+  .date{color:var(--muted);font-size:11px;margin-left:auto}
+  /* Age / staleness */
+  .age{margin-left:auto;flex:none;font-size:11px;color:var(--muted);border:1px solid transparent;
+       border-radius:6px;padding:1px 6px;white-space:nowrap;cursor:help}
+  .age.warn{color:#f5b971;background:rgba(245,185,113,.12);border-color:rgba(245,185,113,.3)}
+  .age.stale{color:#ff9aa6;background:rgba(255,123,138,.12);border-color:rgba(255,123,138,.32)}
+  .card.is-stale{border-color:rgba(255,123,138,.4)}
+  .stale-badge{flex:none;font-size:11px;border-radius:20px;padding:1px 8px;cursor:help;
+               background:rgba(245,185,113,.14);color:#f5b971;border:1px solid rgba(245,185,113,.32)}
+  .col.collapsed .stale-badge{display:none}
+  .empty{color:var(--muted);font-size:12px;text-align:center;padding:18px 6px;border:1px dashed var(--line);border-radius:10px}
+  details.help{padding:10px 18px;color:var(--muted);font-size:12.5px}
+  details.help summary{cursor:pointer;color:var(--accent)}
+  code{background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:12px}
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:18px}
+  .overlay.show{display:flex}
+  .modal{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:480px;max-height:90vh;overflow:auto}
+  .modal h2{margin:0;padding:16px 18px;border-bottom:1px solid var(--line);font-size:15px}
+  .modal .body{padding:16px 18px;display:flex;flex-direction:column;gap:11px}
+  .field{display:flex;flex-direction:column;gap:4px}
+  .field label{font-size:12px;color:var(--muted)}
+  .field label .req{color:var(--rejected)}
+  .field input,.field textarea,.field select{background:var(--panel-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:8px 10px;font:inherit;font-size:13px}
+  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
+  .field textarea{resize:vertical;min-height:54px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+  .modal .foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end;align-items:center}
+  .err{color:var(--rejected);font-size:12px;margin-right:auto;display:none}
+  /* Move-to-column button + popover */
+  .movebtn{position:absolute;top:8px;right:8px;width:24px;height:24px;line-height:1;border-radius:7px;
+           background:var(--panel-2);border:1px solid var(--line);color:var(--muted);font-size:14px;
+           cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;opacity:.4;transition:.12s}
+  .card:hover .movebtn,.movebtn:focus-visible{opacity:1}
+  .movebtn:hover{border-color:var(--accent);color:var(--accent)}
+  .card .top{padding-right:26px}
+  .popover{position:fixed;z-index:80;background:var(--panel);border:1px solid var(--line);border-radius:11px;
+           box-shadow:var(--shadow);padding:5px;min-width:172px;display:none}
+  .popover.show{display:block}
+  .popover .ph{font-size:11px;color:var(--muted);padding:5px 9px 6px}
+  .popover button{display:flex;align-items:center;gap:8px;width:100%;background:none;border:0;color:var(--text);
+                  font:inherit;font-size:13px;text-align:left;padding:7px 9px;border-radius:8px;cursor:pointer}
+  .popover button:hover{background:var(--panel-2)}
+  .popover button[disabled]{opacity:.4;cursor:default}
+  .popover button[disabled]:hover{background:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>🗂️ Job Search Kanban</h1>
+  <button class="btn" id="add">＋ Add job</button>
+  <button class="btn primary" id="open">Open jobs.json</button>
+  <button class="btn" id="save">Save</button>
+  <button class="btn" id="reload">Reload from file</button>
+  <span class="spacer"></span>
+  <span class="status" id="status">Not connected — click “Open jobs.json”.</span>
+</header>
+
+<details class="help">
+  <summary>How this works</summary>
+  <p>This board reads and writes the <code>jobs.json</code> file in your job search folder — the same file the job-scout agent keeps up to date.
+  Click <b>Open jobs.json</b> once per session and grant access. To change a card's status, either click the <b>⋯</b> button on the card and pick a column, or drag the card across. Either way the change saves back to <code>jobs.json</code> automatically (a backup is also kept in this browser).
+  When a card moves to <b>Applied</b>, today's date is recorded. The agent reads this file, skips anything already here (matched by URL, job id, or company and title), and adds only new roles — so a job is never added twice. Moves you make here are recorded as yours, and the agent never changes a status you set or your notes.</p>
+  <p><b>Spotting stale applications:</b> every card shows its age. In <b>Applied</b> and <b>In Process</b> the clock runs from the date you applied, and the age turns amber after 14 days of silence and red after 30 — those two columns also sort longest-wait-first and show a "N stale" badge in the header. Elsewhere the age is grey and runs from when the role was found, since nothing is pending. Hover any age for the exact date.</p>
+  <p><b>Keeping the board manageable:</b> each column scrolls on its own and the board always fits one screen, so a long column no longer stretches the page. Click any column header to collapse it into a slim strip — <b>Archived</b> starts collapsed, and your choice is remembered. A collapsed column still accepts dropped cards. While dragging, moving the pointer near an edge scrolls automatically.</p>
+  <p><i>Note: direct file save uses Chrome/Edge's File System Access API. In other browsers, use <b>Save</b> to download an updated <code>jobs.json</code> and drop it back into the folder.</i></p>
+</details>
+
+<div class="board" id="board"></div>
+
+<div class="overlay" id="d-overlay">
+  <div class="modal">
+    <h2 id="d-title">Card</h2>
+    <div class="body">
+      <div class="field"><label>Hiring manager</label>
+        <input id="d-hm" placeholder="Name — and how you found them (job post, blog, talk)"></div>
+      <div class="field"><label>My notes</label>
+        <textarea id="d-notes" rows="6" placeholder="Your notes. The agent never changes this."></textarea></div>
+      <div class="field"><label>Platform / screening vendor</label>
+        <div class="ro" id="d-vendor">—</div></div>
+      <div class="field"><label>Human contact</label>
+        <div class="ro" id="d-hc">—</div></div>
+      <div class="field"><label>Status history</label>
+        <div class="ro" id="d-hist">—</div></div>
+      <details><summary>Agent notes (read-only)</summary>
+        <div class="ro" id="d-agent" style="margin-top:8px">—</div></details>
+    </div>
+    <div class="foot">
+      <span class="err" id="d-err"></span>
+      <button class="btn" id="d-cancel">Close</button>
+      <button class="btn primary" id="d-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h2>Add a job</h2>
+    <div class="body">
+      <div class="field"><label>Job title <span class="req">*</span></label><input id="f-title" placeholder="Staff Software Engineer"></div>
+      <div class="field"><label>Company <span class="req">*</span></label><input id="f-company" placeholder="Acme AI"></div>
+      <div class="field"><label>Posting URL <span class="req">*</span></label><input id="f-url" placeholder="https://…"></div>
+      <div class="row2">
+        <div class="field"><label>Score (1–10)</label><input id="f-score" type="number" min="1" max="10" placeholder="optional"></div>
+        <div class="field"><label>Start column</label>
+          <select id="f-status">
+            <option value="new">New / Found</option>
+            <option value="applied">Applied</option>
+            <option value="in_process">In Process</option>
+            <option value="rejected">Rejected</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Location</label><input id="f-location" placeholder="Remote — Europe / Hybrid, Berlin"></div>
+      <div class="row2">
+        <div class="field"><label>Work style</label><input id="f-work" placeholder="fully remote"></div>
+        <div class="field"><label>Compensation</label><input id="f-comp" placeholder="€130k or not listed"></div>
+      </div>
+      <div class="field"><label>My notes</label><textarea id="f-notes" placeholder="Why it fits, things to watch for…"></textarea></div>
+    </div>
+    <div class="foot">
+      <span class="err" id="f-err"></span>
+      <button class="btn" id="f-cancel">Cancel</button>
+      <button class="btn primary" id="f-save">Add to board</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const COLUMNS = [
+  {key:"new",       label:"New / Found", color:"var(--new)"},
+  {key:"applied",   label:"Applied",     color:"var(--applied)"},
+  {key:"in_process",label:"In Process",  color:"var(--process)"},
+  {key:"rejected",  label:"Rejected",    color:"var(--rejected)"},
+  {key:"archived",  label:"Archived",    color:"var(--archived)"},
+];
+const LS_KEY = "kanban_jobs_v1";
+const LS_COLLAPSE = "kanban_collapsed_v1";
+
+// Columns collapsed to a slim strip. Archived starts collapsed — it is the
+// biggest column and the one you least often need open.
+let collapsed = (()=>{
+  try{ const v = JSON.parse(localStorage.getItem(LS_COLLAPSE)); if(Array.isArray(v)) return new Set(v); }catch(e){}
+  return new Set(["archived"]);
+})();
+function saveCollapse(){ try{ localStorage.setItem(LS_COLLAPSE, JSON.stringify([...collapsed])); }catch(e){} }
+function toggleCol(key){ collapsed.has(key) ? collapsed.delete(key) : collapsed.add(key); saveCollapse(); render(); }
+
+// Empty seed, so the board renders before a file is opened.
+const SEED = {"meta":{"statuses":["new","applied","in_process","rejected","archived"],"version":1},"jobs":[]};
+
+let data = null;
+let fileHandle = null;
+const $ = s => document.querySelector(s);
+const statusEl = $("#status");
+const today = () => new Date().toISOString().slice(0,10);
+function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = "status" + (cls? " "+cls : ""); }
+
+function loadInitial(){
+  const cached = localStorage.getItem(LS_KEY);
+  if(cached){ try{ data = JSON.parse(cached); setStatus("Loaded from browser backup. Open jobs.json to sync with the file.", ""); return; }catch(e){} }
+  data = JSON.parse(JSON.stringify(SEED));
+  setStatus("Showing seed data. Click “Open jobs.json” to connect the file.", "");
+}
+
+function persistLocal(){ localStorage.setItem(LS_KEY, JSON.stringify(data)); }
+
+async function writeFile(){
+  if(!fileHandle){ persistLocal(); return false; }
+  try{
+    data.meta = data.meta || {}; data.meta.last_updated = today();
+    const w = await fileHandle.createWritable();
+    await w.write(JSON.stringify(data, null, 2));
+    await w.close();
+    persistLocal();
+    setStatus("Saved to jobs.json ✓  ("+new Date().toLocaleTimeString()+")", "ok");
+    return true;
+  }catch(e){ setStatus("Could not write file: "+e.message, "warn"); return false; }
+}
+
+// Re-read jobs.json just before every change, so roles that a scheduled run added while
+// this tab was open are kept. Without it, the board would write back its older copy.
+// Returns false when the file cannot be read; the change is then not made.
+async function refresh(){
+  if(!fileHandle) return true;
+  try{
+    const parsed = JSON.parse(await (await fileHandle.getFile()).text());
+    data = parsed.jobs ? parsed : {meta:{}, jobs:Array.isArray(parsed)?parsed:[]};
+    return true;
+  }catch(e){ setStatus("Could not re-read jobs.json, so nothing was changed: "+e.message, "warn"); return false; }
+}
+
+async function openFile(){
+  if(!window.showOpenFilePicker){
+    setStatus("This browser can't open files directly — use Save to download jobs.json instead.", "warn");
+    return;
+  }
+  try{
+    const [h] = await window.showOpenFilePicker({types:[{description:"JSON",accept:{"application/json":[".json"]}}]});
+    fileHandle = h;
+    const f = await h.getFile();
+    const parsed = JSON.parse(await f.text());
+    data = parsed.jobs ? parsed : {meta:{}, jobs:Array.isArray(parsed)?parsed:[]};
+    persistLocal();
+    render();
+    setStatus("Connected to "+h.name+" — "+data.jobs.length+" jobs. Changes auto-save.", "ok");
+  }catch(e){ if(e.name!=="AbortError") setStatus("Open failed: "+e.message, "warn"); }
+}
+
+async function reloadFile(){
+  if(!fileHandle){ setStatus("No file connected yet — click “Open jobs.json”.", "warn"); return; }
+  const f = await fileHandle.getFile();
+  const parsed = JSON.parse(await f.text());
+  data = parsed.jobs ? parsed : {meta:{}, jobs:parsed};
+  persistLocal(); render();
+  setStatus("Reloaded "+data.jobs.length+" jobs from file.", "ok");
+}
+
+async function saveButton(){
+  if(fileHandle){ await writeFile(); return; }
+  if(window.showSaveFilePicker){
+    try{
+      fileHandle = await window.showSaveFilePicker({suggestedName:"jobs.json",types:[{description:"JSON",accept:{"application/json":[".json"]}}]});
+      await writeFile();
+    }catch(e){ if(e.name!=="AbortError") setStatus(e.message,"warn"); }
+  } else {
+    const blob = new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "jobs.json"; a.click();
+    setStatus("Downloaded jobs.json — move it into your job search folder.", "ok");
+  }
+}
+
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
+
+// ---- Age / staleness -------------------------------------------------------
+// A role you applied to and never heard back about is the thing worth spotting,
+// so Applied and In Process are timed from applied_date. Everything else is
+// timed from when the role was first found.
+const STALE_WARN = 14;   // amber: normal silence has gone on long enough to follow up
+const STALE_RED  = 30;   // red: very likely dead
+const WAITING = new Set(["applied","in_process"]);
+
+function daysSince(iso){
+  if(!iso) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso));
+  if(!m) return null;
+  // Build both dates at local midnight so the result never shifts by a timezone.
+  const then = new Date(+m[1], +m[2]-1, +m[3]);
+  const now = new Date(); const today0 = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const d = Math.round((today0 - then) / 86400000);
+  return isFinite(d) ? d : null;
+}
+
+// Which date the card is aged from, and whether we had to fall back.
+function ageInfo(job){
+  const waiting = WAITING.has(job.status||"new");
+  const primary = waiting ? job.applied_date : null;
+  const iso = primary || job.first_seen || null;
+  const days = daysSince(iso);
+  return { days, iso, waiting, approx: waiting && !primary };
+}
+
+function fmtAge(d){
+  if(d==null) return "—";
+  if(d < 0)   return "today";
+  if(d === 0) return "today";
+  if(d <= 99) return d + "d";
+  return Math.round(d/30) + "mo";
+}
+
+function staleLevel(job){
+  const {days, waiting} = ageInfo(job);
+  if(!waiting || days==null) return "";        // only colour where you're waiting on someone
+  if(days >= STALE_RED)  return "stale";
+  if(days >= STALE_WARN) return "warn";
+  return "";
+}
+
+function ageLabel(job){
+  const {days, iso, waiting, approx} = ageInfo(job);
+  const verb = waiting ? (job.status==="applied" ? "applied" : "in process")
+                       : (job.status==="new" ? "found" : "seen");
+  const text = `${verb} ${fmtAge(days)}`;
+  const title = iso
+    ? `${approx ? "No applied date recorded — aged from when the role was found" : verb[0].toUpperCase()+verb.slice(1)}: ${iso}`
+      + (days!=null ? ` · ${days} day${days===1?"":"s"} ago` : "")
+      + (waiting && days!=null && days>=STALE_WARN ? `\nNo reply in ${days} days — worth a follow-up.` : "")
+    : "No date recorded";
+  return { text: (approx ? "~" : "") + text, title };
+}
+
+// ---- Move-to-column popover ----------------------------------------------
+// Lives on <body> (not inside the card) so a scrolling column can't clip it.
+const pop = document.createElement("div");
+pop.className = "popover";
+document.body.appendChild(pop);
+let popOwner = null;
+
+function closePopover(){ pop.classList.remove("show"); popOwner = null; }
+
+function openPopover(btn, job){
+  if(popOwner === job.id){ closePopover(); return; }
+  popOwner = job.id;
+  pop.innerHTML = `<div class="ph">Move to…</div>` + COLUMNS.map(c=>{
+    const here = (job.status||"new") === c.key;
+    return `<button data-key="${c.key}" ${here?"disabled":""}>
+      <span class="dot" style="background:${c.color}"></span>${c.label}${here?" · here":""}</button>`;
+  }).join("");
+  pop.querySelectorAll("button[data-key]").forEach(b=>{
+    b.addEventListener("click", async ()=>{
+      const key = b.dataset.key;
+      closePopover();
+      await moveJob(job.id, key);
+    });
+  });
+  // Show first so we can measure, then clamp inside the viewport.
+  pop.classList.add("show");
+  const r = btn.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+  let left = r.right - pr.width, top = r.bottom + 6;
+  if(top + pr.height > innerHeight - 8) top = Math.max(8, r.top - pr.height - 6);
+  pop.style.left = Math.max(8, Math.min(left, innerWidth - pr.width - 8)) + "px";
+  pop.style.top = top + "px";
+}
+
+document.addEventListener("click", e=>{ if(popOwner && !pop.contains(e.target)) closePopover(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape"){ closePopover(); closeDetails(); } });
+window.addEventListener("resize", closePopover);
+
+// ---- Status history + human contact ---------------------------------------
+// Every column move is recorded. That history is what tells us whether a human
+// was ever involved: reaching "In Process" means somebody contacted you, while
+// Applied -> Rejected with nothing in between means a rejection email and no
+// human at all. The vendor report reads human_contact to decide whether a
+// screening vendor should be flagged, so this has to be recorded, not guessed.
+function deriveHumanContact(job){
+  const seen = (job.history||[]).map(h=>h.status);
+  if(seen.includes("in_process")) return true;
+  if(job.status === "rejected") return false;
+  return null;
+}
+
+async function moveJob(id, key){
+  if(!(await refresh())) return;
+  const job = (data.jobs||[]).find(j=>j.id===id);
+  if(!job || job.status === key) return;
+  const from = job.status;
+  job.status = key;
+  if(key==="applied" && !job.applied_date) job.applied_date = today();
+  if(key==="rejected" && !job.rejected_date) job.rejected_date = today();
+  // Moves made on this board are marked by:"user", so the agent knows the user made
+  // them and never undoes them.
+  job.history = job.history || [];
+  job.history.push({status:key, from:from||null, date:today(), by:"user"});
+  job.human_contact = deriveHumanContact(job);
+  render();
+  await writeFile();
+}
+
+function cardEl(job){
+  const el = document.createElement("div");
+  el.className = "card"; el.draggable = true; el.dataset.id = job.id;
+  const scoreHtml = (job.score!=null) ? `<span class="score ${job.score<7?'low':''}">${job.score}/10</span>` : "";
+  const tags = [job.work_style, job.compensation].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
+  const watch = job.watch_out ? `<div class="watch">⚠ ${esc(job.watch_out)}</div>` : "";
+  const lvl = staleLevel(job);
+  const age = ageLabel(job);
+  if(lvl==="stale") el.classList.add("is-stale");
+
+  // Platform = the screening software behind the posting (the "vendor" field).
+  const plat = job.vendor && job.vendor!=="unknown"
+    ? `<span class="plat" title="Screening platform behind this posting">${esc(job.vendor)}${job.vendor_inferred?" ·inferred":""}</span>` : "";
+  // Human-contact marker. Only meaningful once applied.
+  const hc = job.human_contact === true
+      ? `<span class="hc yes" title="A human contacted you — this card reached In Process">👤 human</span>`
+    : job.human_contact === false
+      ? `<span class="hc no" title="Rejected with no human contact">🤖 no human</span>` : "";
+  const hm = job.hiring_manager
+    ? `<span><b>👤</b> ${esc(job.hiring_manager)}</span>` : "";
+  const noteFlag = job.my_notes ? `<span class="notedot" title="You have notes on this card">📝</span>` : "";
+
+  el.innerHTML = `
+    <div class="top">
+      <div><h3>${esc(job.title)}</h3><div class="company">${esc(job.company)}</div></div>
+      ${scoreHtml}
+    </div>
+    <div class="meta"><span><b>📍</b> ${esc(job.location||"—")}</span>${hm}</div>
+    <div class="tags">${plat}${hc}${tags}</div>
+    ${watch}
+    <div class="card-actions">
+      ${job.url?`<a href="${esc(job.url)}" target="_blank" rel="noopener">Open posting ↗</a>`:""}
+      <button class="linkbtn editbtn" type="button">Details</button>
+      ${noteFlag}
+      <span class="age ${lvl}" title="${esc(age.title)}">${esc(age.text)}</span>
+    </div>
+    <button class="movebtn" title="Move to another column" aria-label="Move to another column">⋯</button>`;
+
+  const eb = el.querySelector(".editbtn");
+  eb.draggable = false;
+  eb.addEventListener("mousedown", e=> e.stopPropagation());
+  eb.addEventListener("click", e=>{ e.stopPropagation(); openDetails(job); });
+
+  const btn = el.querySelector(".movebtn");
+  btn.draggable = false;
+  // Stop the card's drag from starting when you press the button.
+  btn.addEventListener("mousedown", e=> e.stopPropagation());
+  btn.addEventListener("click", e=>{ e.stopPropagation(); openPopover(btn, job); });
+
+  el.addEventListener("dragstart", e=>{ closePopover(); el.classList.add("dragging"); e.dataTransfer.setData("text/plain", job.id); e.dataTransfer.effectAllowed="move"; startAutoScroll(); });
+  el.addEventListener("dragend", ()=>{ el.classList.remove("dragging"); stopAutoScroll(); });
+  return el;
+}
+
+// ---- Auto-scroll while dragging -------------------------------------------
+// HTML5 drag-and-drop does not scroll containers on its own, so a card can't
+// otherwise reach a column whose contents run past the bottom of the screen.
+let dragPos = null, scrollTimer = null;
+const EDGE = 90, SPEED = 14;
+
+document.addEventListener("dragover", e=>{ dragPos = {x:e.clientX, y:e.clientY}; });
+
+function startAutoScroll(){
+  stopAutoScroll();
+  scrollTimer = setInterval(()=>{
+    if(!dragPos) return;
+    const {x, y} = dragPos;
+    // Prefer scrolling the column under the pointer.
+    const body = document.elementsFromPoint(x, y).find(n=>n.classList && n.classList.contains("col-body"));
+    if(body && body.scrollHeight > body.clientHeight){
+      const r = body.getBoundingClientRect();
+      if(y < r.top + EDGE)         body.scrollTop -= SPEED;
+      else if(y > r.bottom - EDGE) body.scrollTop += SPEED;
+    }
+    // Fall back to the page itself (matters on narrow screens where the
+    // board scrolls horizontally or the header pushes columns down).
+    if(y < EDGE) scrollBy(0, -SPEED);
+    else if(y > innerHeight - EDGE) scrollBy(0, SPEED);
+    if(x < EDGE) scrollBy(-SPEED, 0);
+    else if(x > innerWidth - EDGE) scrollBy(SPEED, 0);
+  }, 16);
+}
+function stopAutoScroll(){ clearInterval(scrollTimer); scrollTimer = null; dragPos = null; }
+document.addEventListener("drop", stopAutoScroll);
+
+// ---- Card details ----------------------------------------------------------
+let detailsJob = null;
+
+function histLine(h){
+  const lbl = (COLUMNS.find(c=>c.key===h.status)||{}).label || h.status;
+  const when = h.date || "date unknown";
+  const rec = h.reconstructed ? ' <i style="opacity:.65">(reconstructed)</i>' : "";
+  return `<div>${esc(when)} — ${esc(lbl)}${rec}</div>`;
+}
+
+function openDetails(job){
+  detailsJob = job;
+  $("#d-title").textContent = job.title + " — " + job.company;
+  $("#d-hm").value = job.hiring_manager || "";
+  $("#d-notes").value = job.my_notes || "";
+  $("#d-vendor").textContent = (job.vendor || "unknown")
+    + (job.vendor_inferred ? "  (inferred from a sibling posting)" : "")
+    + (job.channel ? "  ·  channel: " + job.channel : "");
+  $("#d-hc").innerHTML = job.human_contact === true
+      ? "👤 Yes — this card reached In Process."
+    : job.human_contact === false
+      ? "🤖 No — rejected without ever reaching In Process."
+      : "— Not applicable yet.";
+  const h = job.history || [];
+  $("#d-hist").innerHTML = h.length ? h.map(histLine).join("") : "No history recorded.";
+  $("#d-agent").textContent = job.notes || "—";
+  $("#d-err").textContent = "";
+  $("#d-overlay").classList.add("show");
+}
+
+function closeDetails(){ $("#d-overlay").classList.remove("show"); detailsJob = null; }
+
+async function saveDetails(){
+  if(!detailsJob) return closeDetails();
+  const id = detailsJob.id, hm = $("#d-hm").value.trim(), notes = $("#d-notes").value.trim();
+  if(!(await refresh())) return;
+  const job = (data.jobs||[]).find(j=>j.id===id);
+  if(job){ job.hiring_manager = hm; job.my_notes = notes; }
+  closeDetails();
+  render();
+  await writeFile();
+}
+
+function render(){
+  closePopover();
+  const board = $("#board"); board.innerHTML = "";
+  // Collapsed columns shrink to a slim strip; the rest share the space evenly.
+  board.style.gridTemplateColumns = COLUMNS
+    .map(c => collapsed.has(c.key) ? "52px" : "minmax(240px,1fr)").join(" ");
+
+  for(const col of COLUMNS){
+    const jobs = (data.jobs||[]).filter(j=>(j.status||"new")===col.key);
+    const isShut = collapsed.has(col.key);
+
+    // Columns where you're waiting on someone lead with the longest wait.
+    // Everywhere else, best-scoring first.
+    const waiting = WAITING.has(col.key);
+    jobs.sort(waiting
+      ? (a,b)=>((ageInfo(b).days??-1)-(ageInfo(a).days??-1)) || ((b.score||0)-(a.score||0))
+      : (a,b)=>(b.score||0)-(a.score||0));
+
+    const nStale = waiting ? jobs.filter(j=>staleLevel(j)).length : 0;
+    const badge = nStale
+      ? `<span class="stale-badge" title="${nStale} role${nStale===1?"":"s"} with no reply for ${STALE_WARN}+ days">${nStale} stale</span>`
+      : "";
+
+    const colEl = document.createElement("div");
+    colEl.className = "col" + (isShut ? " collapsed" : "");
+    colEl.dataset.status = col.key;
+    colEl.innerHTML = `<div class="col-head" title="${isShut?"Expand":"Collapse"} ${col.label}">
+        <span class="dot" style="background:${col.color}"></span>
+        <span class="col-title">${col.label}</span>
+        <span class="count">${jobs.length}</span>
+        ${badge}
+        ${isShut ? "" : `<span class="chev">▾</span>`}
+      </div>
+      <div class="col-body"></div>`;
+
+    colEl.querySelector(".col-head").addEventListener("click", ()=> toggleCol(col.key));
+
+    if(!isShut){
+      const body = colEl.querySelector(".col-body");
+      if(jobs.length===0){ body.innerHTML = `<div class="empty">Drop here</div>`; }
+      else jobs.forEach(j=>body.appendChild(cardEl(j)));
+    }
+
+    colEl.addEventListener("dragover", e=>{ e.preventDefault(); colEl.classList.add("drag-over"); });
+    colEl.addEventListener("dragleave", ()=> colEl.classList.remove("drag-over"));
+    colEl.addEventListener("drop", async e=>{
+      e.preventDefault(); colEl.classList.remove("drag-over");
+      const id = e.dataTransfer.getData("text/plain");
+      await moveJob(id, col.key);
+    });
+    board.appendChild(colEl);
+  }
+}
+
+// ---- Add job modal ----
+const overlay = $("#overlay");
+// The hiring software behind a posting URL (the same rule as the agent's scripts).
+function detectVendor(url){
+  const u = (url||"").toLowerCase();
+  const known = [["myworkdayjobs.com","Workday"],["greenhouse.io","Greenhouse"],["lever.co","Lever"],
+    ["ashbyhq.com","Ashby"],["icims.com","iCIMS"],["smartrecruiters.com","SmartRecruiters"],
+    ["recruitee.com","Recruitee"],["workable.com","Workable"]];
+  for(const [domain,name] of known){ if(u.includes(domain)) return name; }
+  if(/[?&]gh_(jid|src)=/.test(u)) return "Greenhouse";
+  return u ? "company-own" : "unknown";
+}
+function slugify(s){ return (s||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,60); }
+function openModal(){
+  ["title","company","url","score","location","work","comp","notes"].forEach(k=>{ const el=$("#f-"+k); if(el) el.value=""; });
+  $("#f-status").value="new"; $("#f-err").style.display="none";
+  overlay.classList.add("show"); $("#f-title").focus();
+}
+function closeModal(){ overlay.classList.remove("show"); }
+async function addJob(){
+  const title=$("#f-title").value.trim(), company=$("#f-company").value.trim(), url=$("#f-url").value.trim();
+  const err=$("#f-err");
+  if(!title||!company||!url){ err.textContent="Title, company and URL are required."; err.style.display="block"; return; }
+  if(!/^https?:\/\//i.test(url)){ err.textContent="URL must start with http(s)://"; err.style.display="block"; return; }
+  if(!(await refresh())) return;
+  if((data.jobs||[]).some(j=>j.url===url)){ err.textContent="That URL is already on the board."; err.style.display="block"; return; }
+  const scoreRaw=$("#f-score").value.trim();
+  const job={
+    id: slugify(company+"-"+title)+"-"+Date.now().toString(36).slice(-4),
+    title, company, url,
+    status: $("#f-status").value,
+    score: scoreRaw? Math.max(1,Math.min(10,parseInt(scoreRaw,10))) : null,
+    location: $("#f-location").value.trim(),
+    work_style: $("#f-work").value.trim(),
+    compensation: $("#f-comp").value.trim(),
+    why:"", watch_out:"",
+    source:"manual",
+    first_seen: today(), last_verified: today(),
+    applied_date: $("#f-status").value==="applied"? today() : null,
+    notes: "",
+    my_notes: $("#f-notes").value.trim(),
+    vendor: detectVendor(url), channel: "portal", human_contact: null, hiring_manager: "",
+    history: [{status: $("#f-status").value, from: null, date: today(), by:"user"}]
+  };
+  data.jobs = data.jobs||[]; data.jobs.push(job);
+  closeModal(); render(); await writeFile();
+}
+$("#add").addEventListener("click", openModal);
+$("#f-cancel").addEventListener("click", closeModal);
+$("#d-cancel").addEventListener("click", closeDetails);
+$("#d-save").addEventListener("click", saveDetails);
+$("#d-overlay").addEventListener("click", e=>{ if(e.target===$("#d-overlay")) closeDetails(); });
+$("#f-save").addEventListener("click", addJob);
+overlay.addEventListener("click", e=>{ if(e.target===overlay) closeModal(); });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") closeModal(); });
+
+$("#open").addEventListener("click", openFile);
+$("#save").addEventListener("click", saveButton);
+$("#reload").addEventListener("click", reloadFile);
+
+loadInitial();
+render();
+</script>
+</body>
+</html>

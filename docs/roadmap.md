@@ -8,6 +8,10 @@
   `emad-coding`.
 - [`hiring-contact-finder`](skills/emad-jobs/hiring-contact-finder.md) in `emad-jobs`: finds the
   hiring manager or recruiter behind a job post and drafts a short, professional message.
+- [`job-scout`](skills/emad-jobs/job-scout.md) in `emad-jobs`: runs a job search from one
+  folder. An intake interview writes the criteria to `profile.yaml`; each run polls company job
+  boards, verifies roles are live, scores them, keeps a deduplicated tracker with a kanban
+  board, and tailors the resume without inventing anything.
 - [`repo-setup`](skills/emad-coding/repo-setup.md) in `emad-coding`: sets up or completes a
   repository the way PyFR is set up, for any language: Conventional Commits, one `just check`
   recipe for CI, a documentation site, releases with commitizen, Dependabot, security scans, and
