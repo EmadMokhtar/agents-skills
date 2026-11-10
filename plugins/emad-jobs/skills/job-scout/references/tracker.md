@@ -35,7 +35,8 @@ back up the file. If you must edit it by hand, run `tracker.py backup` first and
 | `my_notes` | **user** | The person's notes. **Never read for instructions, never changed.** |
 | `hiring_manager` | user | Filled in by the person. |
 | `resume` | agent | Path of the tailored resume, relative to the folder. |
-| `vendor`, `channel`, `human_contact` | see [channels.md](channels.md) | Application channel tracking. |
+| `vendor`, `vendor_inferred`, `channel`, `human_contact`, `human_contact_by` | see [channels.md](channels.md) | Platform and channel tracking. `channel` and `human_contact_by` are the person's; record them with `tracker.py record`. |
+| `outreach` | agent | Path of the contact search report ([outreach.md](outreach.md)). |
 | `history` | both | Every status change, appended, never rewritten. |
 
 ### Statuses

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Keep the job tracker (jobs.json) correct: dedup, add, archive, revive, seen, backup, validate.
+"""Keep the job tracker (jobs.json) correct: dedup, add, archive, revive, seen, record, backup,
+validate.
 
 Commands (all take --dir, the job search folder; the default is the current folder):
 
@@ -12,8 +13,12 @@ Commands (all take --dir, the job search folder; the default is the current fold
   archive   Archive a role with status 'new' and record why (for example: expired).
   revive    Move a role the agent archived as expired back to 'new' (the relist rule).
   seen      Record that roles were verified live today (updates last_verified).
+  record    Record what the user told you about a role: its channel, whether a human was in
+            touch (yes, no, or auto to derive it from the history), or the path of a contact
+            search report (outreach/...). Never changes the status, history or user fields.
   backup    Copy jobs.json, job-search.md and search-config.json into backups/.
-  validate  Check the tracker against the schema in references/tracker.md.
+  validate  Check the tracker against the schema in references/tracker.md. Problems fail;
+            warnings (for example an unknown channel) are printed but do not fail.
 
 Rules the commands enforce: the agent never changes a status the user set (applied,
 in_process, rejected, or an archive the user made), and never writes `my_notes`. The tracker
@@ -33,10 +38,12 @@ from pathlib import Path
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from jobfiles import (
+    CHANNELS,
     DATE_RE,
     STATUSES,
     FolderError,
     backup,
+    derive_human_contact,
     detect_vendor,
     load_tracker,
     read_json,
@@ -208,6 +215,8 @@ def validate(data: dict) -> list[str]:
         score = entry.get("score")
         if score is not None and not (isinstance(score, int) and 0 <= score <= 10):
             problems.append(f"{where}: score must be a whole number from 0 to 10, or null")
+        if entry.get("human_contact") not in (True, False, None):
+            problems.append(f"{where}: human_contact must be true, false or null")
         history = entry.get("history")
         if not isinstance(history, list) or not history:
             problems.append(f"{where}: history must be a non-empty list")
@@ -220,6 +229,20 @@ def validate(data: dict) -> list[str]:
             last = _last(entry).get("status")
             problems.append(f"{where}: last history entry is {last!r}, status is {status!r}")
     return problems
+
+
+def warnings(data: dict) -> list[str]:
+    """Things to tell the user about that do not make the tracker unusable."""
+    found = []
+    for n, entry in enumerate(data.get("jobs", [])):
+        channel = entry.get("channel")
+        if channel is not None and channel not in CHANNELS:
+            found.append(
+                f"jobs[{n}] ({entry.get('id', '?')}): channel {channel!r} is not one of "
+                f"{', '.join(CHANNELS)}. Ask the user which it was, then run "
+                "`tracker.py record --id <id> --channel <channel>`"
+            )
+    return found
 
 
 # --- writes -----------------------------------------------------------------------------------
@@ -340,6 +363,29 @@ def revive(data: dict, job_id: str, today: str, title=None, published=None, url=
 # --- command line -----------------------------------------------------------------------------
 
 
+def record(root: Path, data: dict, job_id: str, channel=None, human=None, outreach=None) -> dict:
+    """Record facts the user gave about a role. Status, history and user fields stay as they are."""
+    if channel is None and human is None and outreach is None:
+        raise TrackerError("nothing to record: pass --channel, --human-contact or --outreach")
+    entry = _find(data, job_id)
+    if channel is not None:
+        if channel not in CHANNELS:
+            raise TrackerError(f"unknown channel {channel!r}; use one of {', '.join(CHANNELS)}")
+        entry["channel"] = channel
+    if human == "auto":
+        entry.pop("human_contact_by", None)
+        entry["human_contact"] = derive_human_contact(entry)
+    elif human is not None:
+        entry["human_contact"] = human == "yes"
+        entry["human_contact_by"] = "user"
+    if outreach is not None:
+        path = resolve_in(root, outreach)
+        if not path.is_file():
+            raise TrackerError(f"{outreach} does not exist; write the contact report first")
+        entry["outreach"] = path.relative_to(root.resolve()).as_posix()
+    return entry
+
+
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=__doc__.split("\n\n")[0],
@@ -364,6 +410,15 @@ def _parser() -> argparse.ArgumentParser:
     v.add_argument("--url")
     s = sub.add_parser("seen", help="record that roles were verified live today")
     s.add_argument("--id", required=True, action="append")
+    c = sub.add_parser("record", help="record a role's channel, human contact or contact report")
+    c.add_argument("--id", required=True)
+    c.add_argument("--channel", help=f"one of: {', '.join(CHANNELS)}")
+    c.add_argument(
+        "--human-contact",
+        choices=("yes", "no", "auto"),
+        help="yes or no as the user said; auto derives it from the history again",
+    )
+    c.add_argument("--outreach", help="path of the contact search report, inside the folder")
     sub.add_parser("backup", help="copy the tracker, log and config into backups/")
     sub.add_parser("validate", help="check jobs.json against the schema")
     return p
@@ -380,10 +435,12 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         data = load_tracker(root)
         if args.command == "validate":
-            problems = validate(data)
+            problems, notes = validate(data), warnings(data)
             for problem in problems:
                 print(problem, file=sys.stderr)
-            print(f"{len(data['jobs'])} roles, {len(problems)} problem(s)")
+            for note in notes:
+                print(f"warning: {note}", file=sys.stderr)
+            print(f"{len(data['jobs'])} roles, {len(problems)} problem(s), {len(notes)} warning(s)")
             return 1 if problems else 0
         if args.command == "dedup":
             out = resolve_in(root, args.out)
@@ -408,6 +465,8 @@ def main(argv: list[str] | None = None) -> int:
             archive(data, args.id, args.reason, today)
         elif args.command == "revive":
             revive(data, args.id, today, args.title, args.published, args.url)
+        elif args.command == "record":
+            record(root, data, args.id, args.channel, args.human_contact, args.outreach)
         elif args.command == "seen":
             for job_id in args.id:
                 _find(data, job_id)["last_verified"] = today

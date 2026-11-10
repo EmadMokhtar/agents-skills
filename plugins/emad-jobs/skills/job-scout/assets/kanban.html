@@ -150,8 +150,23 @@
         <textarea id="d-notes" rows="6" placeholder="Your notes. The agent never changes this."></textarea></div>
       <div class="field"><label>Platform / screening vendor</label>
         <div class="ro" id="d-vendor">—</div></div>
-      <div class="field"><label>Human contact</label>
-        <div class="ro" id="d-hc">—</div></div>
+      <div class="field"><label>How you applied (channel)</label>
+        <select id="d-channel">
+          <option value="portal">portal</option>
+          <option value="referral">referral</option>
+          <option value="hiring-manager-direct">hiring-manager-direct</option>
+          <option value="recruiter-inbound">recruiter-inbound</option>
+          <option value="community">community</option>
+        </select></div>
+      <div class="field"><label>Did a person contact you about this role?</label>
+        <select id="d-hc-set">
+          <option value="auto">Work it out from the status history</option>
+          <option value="yes">Yes: a named person wrote, called or interviewed me</option>
+          <option value="no">No: no person was ever involved</option>
+        </select>
+        <div class="ro" id="d-hc" style="margin-top:6px">—</div></div>
+      <div class="field" id="d-outreach-row" hidden><label>Contact search (hiring-contact-finder)</label>
+        <div class="ro" id="d-outreach">—</div></div>
       <div class="field"><label>Status history</label>
         <div class="ro" id="d-hist">—</div></div>
       <details><summary>Agent notes (read-only)</summary>
@@ -405,9 +420,12 @@ window.addEventListener("resize", closePopover);
 // Applied -> Rejected with nothing in between means a rejection email and no
 // human at all. The vendor report reads human_contact to decide whether a
 // screening vendor should be flagged, so this has to be recorded, not guessed.
+// An answer the user gave in the card details (human_contact_by:"user") is kept,
+// because a named recruiter can write without the card ever moving to In Process.
 function deriveHumanContact(job){
   const seen = (job.history||[]).map(h=>h.status);
   if(seen.includes("in_process")) return true;
+  if(job.human_contact_by === "user") return job.human_contact;
   if(job.status === "rejected") return false;
   return null;
 }
@@ -530,13 +548,25 @@ function openDetails(job){
   $("#d-hm").value = job.hiring_manager || "";
   $("#d-notes").value = job.my_notes || "";
   $("#d-vendor").textContent = (job.vendor || "unknown")
-    + (job.vendor_inferred ? "  (inferred from a sibling posting)" : "")
-    + (job.channel ? "  ·  channel: " + job.channel : "");
+    + (job.vendor_inferred ? "  (inferred from another posting at this company)" : "");
+  const ch = $("#d-channel");
+  ch.querySelectorAll("option[data-old]").forEach(o=>o.remove());
+  if(job.channel && ![...ch.options].some(o=>o.value===job.channel)){
+    // An older value from before the channel list existed: keep it until the user picks one.
+    const old = document.createElement("option");
+    old.value = job.channel; old.textContent = job.channel + " (old value: pick one)";
+    old.dataset.old = "1"; ch.appendChild(old);
+  }
+  ch.value = job.channel || "portal";
+  $("#d-hc-set").value = job.human_contact_by === "user"
+    ? (job.human_contact ? "yes" : "no") : "auto";
   $("#d-hc").innerHTML = job.human_contact === true
-      ? "👤 Yes — this card reached In Process."
+      ? "👤 Yes — a person was in touch."
     : job.human_contact === false
-      ? "🤖 No — rejected without ever reaching In Process."
-      : "— Not applicable yet.";
+      ? "🤖 No — no person was ever involved."
+      : "— Not known yet.";
+  $("#d-outreach-row").hidden = !job.outreach;
+  $("#d-outreach").textContent = job.outreach || "—";
   const h = job.history || [];
   $("#d-hist").innerHTML = h.length ? h.map(histLine).join("") : "No history recorded.";
   $("#d-agent").textContent = job.notes || "—";
@@ -549,9 +579,15 @@ function closeDetails(){ $("#d-overlay").classList.remove("show"); detailsJob = 
 async function saveDetails(){
   if(!detailsJob) return closeDetails();
   const id = detailsJob.id, hm = $("#d-hm").value.trim(), notes = $("#d-notes").value.trim();
+  const channel = $("#d-channel").value, hc = $("#d-hc-set").value;
   if(!(await refresh())) return;
   const job = (data.jobs||[]).find(j=>j.id===id);
-  if(job){ job.hiring_manager = hm; job.my_notes = notes; }
+  if(job){
+    job.hiring_manager = hm; job.my_notes = notes; job.channel = channel;
+    if(hc === "auto"){ delete job.human_contact_by; }
+    else { job.human_contact = hc === "yes"; job.human_contact_by = "user"; }
+    job.human_contact = deriveHumanContact(job);
+  }
   closeDetails();
   render();
   await writeFile();

@@ -358,3 +358,72 @@ def test_numeric_job_ids_match_only_within_one_company():
         url="https://globex.wd5.myworkdayjobs.com/jobs/job/JR123456",
     )
     assert len(tracker.classify([other], [tracked])["new"]) == 1
+
+
+# --- record: channel, human contact, contact search ------------------------------------------
+
+
+def test_record_sets_the_channel_and_touches_nothing_else(tmp_path):
+    entry = job(status="applied", my_notes="mine", hiring_manager="Ana")
+    entry["history"].append({"status": "applied", "date": "2026-11-03", "by": "user"})
+    write_jobs(tmp_path, [entry])
+    before = read_jobs(tmp_path)[0]
+    assert run(tmp_path, "record", "--id", entry["id"], "--channel", "referral") == 0
+    after = read_jobs(tmp_path)[0]
+    assert after["channel"] == "referral"
+    for field in ("status", "history", "my_notes", "hiring_manager", "human_contact"):
+        assert after[field] == before[field], field
+
+
+def test_record_refuses_an_unknown_channel(tmp_path, capsys):
+    write_jobs(tmp_path, [job()])
+    assert run(tmp_path, "record", "--id", job()["id"], "--channel", "linkedin") == 1
+    assert "portal, referral" in capsys.readouterr().err
+    assert read_jobs(tmp_path)[0]["channel"] == "portal"
+
+
+def test_record_human_contact_is_kept_as_the_users_answer(tmp_path):
+    entry = job(status="rejected", human_contact=False)
+    entry["history"] += [
+        {"status": "applied", "date": "2026-11-03", "by": "user"},
+        {"status": "rejected", "date": "2026-11-05", "by": "user"},
+    ]
+    write_jobs(tmp_path, [entry])
+    assert run(tmp_path, "record", "--id", entry["id"], "--human-contact", "yes") == 0
+    saved = read_jobs(tmp_path)[0]
+    assert saved["human_contact"] is True and saved["human_contact_by"] == "user"
+    assert run(tmp_path, "record", "--id", entry["id"], "--human-contact", "auto") == 0
+    saved = read_jobs(tmp_path)[0]
+    assert saved["human_contact"] is False and "human_contact_by" not in saved
+
+
+def test_record_outreach_needs_a_file_inside_the_folder(tmp_path, capsys):
+    write_jobs(tmp_path, [job()])
+    assert run(tmp_path, "record", "--id", job()["id"], "--outreach", "outreach/acme.md") == 1
+    assert "does not exist" in capsys.readouterr().err
+    (tmp_path / "outreach").mkdir()
+    (tmp_path / "outreach" / "acme.md").write_text("# Acme\n", encoding="utf-8")
+    assert run(tmp_path, "record", "--id", job()["id"], "--outreach", "outreach/acme.md") == 0
+    assert read_jobs(tmp_path)[0]["outreach"] == "outreach/acme.md"
+    outside = tmp_path.parent / "elsewhere.md"
+    outside.write_text("x", encoding="utf-8")
+    assert run(tmp_path, "record", "--id", job()["id"], "--outreach", str(outside)) == 1
+
+
+def test_record_needs_something_to_record(tmp_path, capsys):
+    write_jobs(tmp_path, [job()])
+    assert run(tmp_path, "record", "--id", job()["id"]) == 1
+    assert "nothing to record" in capsys.readouterr().err
+
+
+def test_validate_warns_about_an_unknown_channel_without_failing(tmp_path, capsys):
+    write_jobs(tmp_path, [job(channel="ATS (Ashby)")])
+    assert run(tmp_path, "validate") == 0
+    err = capsys.readouterr().err
+    assert "warning" in err and "channel 'ATS (Ashby)'" in err and "record" in err
+
+
+def test_validate_rejects_a_human_contact_that_is_not_true_false_or_null(tmp_path, capsys):
+    write_jobs(tmp_path, [job(human_contact="maybe")])
+    assert run(tmp_path, "validate") == 1
+    assert "human_contact" in capsys.readouterr().err

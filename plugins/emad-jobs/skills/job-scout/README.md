@@ -32,9 +32,16 @@ It never applies or sends anything for you.
    leads with your most relevant experience. It never adds a skill, a number or a job you
    do not already have. If a role asks for something your resume does not show, it tells
    you instead.
-5. **Housekeeping.** It archives resumes for dead roles, carries corrected dates from your
-   base resume into the copies you have not sent yet, and reports which application channels
-   get human replies.
+5. **Reaching people.** It can find the hiring manager or recruiter behind a reported role,
+   with
+   [`hiring-contact-finder`](https://emadmokhtar.github.io/agents-skills/skills/emad-jobs/hiring-contact-finder/),
+   and draft a short note for you to send. Intake asks whether it should do this for every
+   reported role, only when you ask, or never. It also drafts referral requests and, after
+   a fast automated rejection from an EU, EEA or UK employer, a request for a human review.
+6. **Housekeeping.** It archives resumes for dead roles, carries corrected dates from your
+   base resume into the copies you have not sent yet, and reports which hiring platforms
+   and which application channels (portal, referral, a note to the hiring manager) get a
+   person to reply. You record the channel and whether a person replied on the board.
 
 It can also run on a schedule. Then it asks no questions, and notifies you only when there is
 something new or something failed.
@@ -67,6 +74,7 @@ Everything lives in the folder you choose:
 | `kanban.html` | Your board. |
 | `search-config.json` | The list of company job boards to check. |
 | `resumes/` | Tailored resumes; `resumes/_archive/` for roles that are over. |
+| `outreach/` | Contact search reports and draft notes. You send them; the agent never does. |
 | `backups/` | Dated copies of the tracker and the log, made before every change. |
 
 ## Safety promises

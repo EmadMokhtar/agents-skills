@@ -128,3 +128,15 @@ resume:
   page_count:
   # File name for tailored copies; {company} and {role} are filled in.
   file_name: "{company} - {role}.docx"
+
+# Reaching a person behind a role. The hiring-contact-finder skill finds the hiring manager
+# or recruiter from public, professional sources and drafts a short note. The person always
+# sends it; the agent never does.
+outreach:
+  # When to look for the people behind a reported role: ask (offer it at the end of each
+  # run), auto (do it for each reported role, also in unattended runs), or never
+  # (default: ask).
+  find_contacts: ask
+  # The most contact searches in one run, highest score first. Each one takes many web
+  # searches (default: 3).
+  max_per_run: 3

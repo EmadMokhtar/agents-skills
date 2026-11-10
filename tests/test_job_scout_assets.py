@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import subprocess
 import sys
 
@@ -112,3 +113,50 @@ def test_the_kanban_board_rereads_the_file_before_every_change():
     for function in ("moveJob", "saveDetails", "addJob"):
         body = text.split(f"async function {function}(", 1)[1].split("\n}\n", 1)[0]
         assert "await refresh()" in body, function
+
+
+def test_the_profile_template_asks_about_the_contact_search():
+    profile = profile_yaml.load(ASSETS / "profile.template.yaml")
+    assert profile_yaml.get(profile, "outreach.find_contacts") == "ask"
+    assert profile_yaml.get(profile, "outreach.max_per_run") == 3
+    intake = (SKILL / "references" / "intake.md").read_text(encoding="utf-8")
+    assert "outreach.find_contacts" in intake
+    assert "hiring-contact-finder" in intake
+
+
+def _kanban_function(name: str) -> str:
+    text = (ASSETS / "kanban.html").read_text(encoding="utf-8")
+    start = text.index(f"function {name}(")
+    return text[start : text.index("\n}\n", start) + 2]
+
+
+def test_the_kanban_board_lets_the_user_set_channel_and_human_contact():
+    text = (ASSETS / "kanban.html").read_text(encoding="utf-8")
+    vendor_report = load("vendor_report")
+    for channel in vendor_report.CHANNELS:
+        assert f'<option value="{channel}">' in text, channel
+    assert 'id="d-channel"' in text and 'id="d-hc-set"' in text
+    save = _kanban_function("saveDetails")
+    assert "job.channel" in save and "human_contact_by" in save
+
+
+@pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+def test_the_kanban_board_keeps_a_human_contact_the_user_set():
+    script = (
+        _kanban_function("deriveHumanContact")
+        + """
+const cases = [
+  {status: "rejected", history: [{status: "applied"}, {status: "rejected"}]},
+  {status: "rejected", history: [{status: "applied"}, {status: "rejected"}],
+   human_contact: true, human_contact_by: "user"},
+  {status: "applied", history: [{status: "applied"}], human_contact: false,
+   human_contact_by: "user"},
+  {status: "rejected", history: [{status: "in_process"}, {status: "rejected"}],
+   human_contact: false, human_contact_by: "user"},
+  {status: "applied", history: [{status: "applied"}]},
+];
+console.log(JSON.stringify(cases.map(deriveHumanContact)));
+"""
+    )
+    out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
+    assert json.loads(out.stdout) == [False, True, False, True, None]

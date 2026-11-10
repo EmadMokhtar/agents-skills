@@ -19,6 +19,8 @@ STATUSES = ("new", "applied", "in_process", "rejected", "archived")
 # Files that get a dated copy in backups/ before they change.
 BACKED_UP = ("jobs.json", "job-search.md", "search-config.json")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# How an application went in. The person decides; the agent records what they say.
+CHANNELS = ("portal", "referral", "hiring-manager-direct", "recruiter-inbound", "community")
 
 # Hiring software, found from the posting URL. Matching is by substring.
 VENDOR_DOMAINS = (
@@ -135,3 +137,20 @@ def detect_vendor(url: str | None) -> str:
     if re.search(r"[?&]gh_(jid|src)=", u):
         return "Greenhouse"
     return "company-own" if u else "unknown"
+
+
+def derive_human_contact(job: dict):
+    """Did a human ever take part in this application? True, False, or None (unknown).
+
+    Reaching in_process always means yes. Otherwise an answer the person gave
+    (human_contact_by == "user") is kept: a named recruiter may have written without the
+    card moving. Otherwise a rejection with history means no, and anything else is unknown.
+    """
+    seen = [h.get("status") for h in job.get("history") or []]
+    if "in_process" in seen:
+        return True
+    if job.get("human_contact_by") == "user":
+        return job.get("human_contact")
+    if job.get("status") == "rejected" and seen:
+        return False
+    return None

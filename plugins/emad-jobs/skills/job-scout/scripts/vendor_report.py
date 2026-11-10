@@ -8,12 +8,18 @@ applications through the same portal.
 
 Rule: a vendor with 3 or more rejections and no human contact on any application is
 FLAGGED. If some rejections have human_contact still unknown (null), the flag is
-PROVISIONAL until the user fills it in.
+PROVISIONAL until the user fills it in. A second table shows, per channel (portal,
+referral, ...), how many applications reached a person.
+
+A company careers page often hides the vendor on some postings and shows it on others (a
+gh_jid parameter means Greenhouse). When all the known postings of a company share one
+vendor, its 'company-own' postings are counted under that vendor; --fill writes it down
+with vendor_inferred: true.
 
 Usage:
   python3 vendor_report.py --dir ~/job-search                       # print the report
   python3 vendor_report.py --dir ~/job-search --out vendor-report.md
-  python3 vendor_report.py --dir ~/job-search --fill   # add missing vendor/channel fields
+  python3 vendor_report.py --dir ~/job-search --fill   # add missing fields, infer vendors
 """
 
 from __future__ import annotations
@@ -23,7 +29,9 @@ import sys
 from pathlib import Path
 
 from jobfiles import (
+    CHANNELS,
     FolderError,
+    derive_human_contact,
     detect_vendor,
     load_tracker,
     resolve_in,
@@ -46,18 +54,34 @@ VENDOR_CLASS = {
     "Workable": "routing",
     "Personio": "routing",
 }
-CHANNELS = ("portal", "referral", "hiring-manager-direct", "recruiter-inbound", "community")
 APPLIED = ("applied", "in_process", "rejected")
+NOT_KNOWN = ("company-own", "unknown", None, "")
+SOURCE = (
+    'Source: Stanford HAI (Institute for Human-Centered AI), May 2026, "AI Hiring Tools Can '
+    'Yield Racial Bias and Systemic Rejection": '
+    "https://hai.stanford.edu/news/ai-hiring-tools-can-yield-racial-bias-and-systemic-rejection"
+)
 
 
-def derive_human_contact(job: dict):
-    """True once the role reached in_process; False if rejected without it; else None."""
-    seen = [h.get("status") for h in job.get("history") or []]
-    if "in_process" in seen:
-        return True
-    if job.get("status") == "rejected" and seen:
-        return False
-    return None
+def _company(job: dict) -> str:
+    return " ".join(str(job.get("company") or "").lower().split())
+
+
+def company_vendors(jobs: list[dict]) -> dict[str, str]:
+    """Companies whose known postings all use one vendor, mapped to that vendor."""
+    seen: dict[str, set] = {}
+    for j in jobs:
+        vendor = j.get("vendor") or detect_vendor(j.get("url"))
+        if vendor not in NOT_KNOWN:
+            seen.setdefault(_company(j), set()).add(vendor)
+    return {company: next(iter(v)) for company, v in seen.items() if len(v) == 1}
+
+
+def vendor_of(job: dict, known: dict[str, str]) -> str:
+    vendor = job.get("vendor") or detect_vendor(job.get("url"))
+    if vendor == "company-own" and _company(job) in known:
+        return known[_company(job)]
+    return vendor
 
 
 def _human(job: dict):
@@ -67,15 +91,25 @@ def _human(job: dict):
 
 def report(jobs: list[dict]) -> str:
     apps = [j for j in jobs if j.get("status") in APPLIED]
+    known = company_vendors(jobs)
     stats: dict[str, dict] = {}
+    by_channel: dict[str, dict] = {}
     for j in apps:
-        vendor = j.get("vendor") or detect_vendor(j.get("url"))
+        human = _human(j)
+        c = by_channel.setdefault(
+            j.get("channel") or "portal", {"apps": 0, "human": 0, "rej_no": 0, "rej_unknown": 0}
+        )
+        c["apps"] += 1
+        c["human"] += human is True
+        if j.get("status") == "rejected":
+            c["rej_no"] += human is False
+            c["rej_unknown"] += human is None
+        vendor = vendor_of(j, known)
         s = stats.setdefault(
             vendor, {"apps": 0, "rej": 0, "rej_no": 0, "rej_unknown": 0, "human": 0, "co": set()}
         )
         s["apps"] += 1
         s["co"].add(j.get("company", "?"))
-        human = _human(j)
         s["human"] += human is True
         if j.get("status") == "rejected":
             s["rej"] += 1
@@ -130,18 +164,43 @@ def report(jobs: list[dict]) -> str:
             )
         lines.append("")
     lines += [
+        "## By channel",
+        "",
+        "| Channel | Apps | Reached a person | Rejected, no human contact "
+        "| Rejected, human contact unknown |",
+        "|---|---:|---:|---:|---:|",
+    ]
+    order = [c for c in CHANNELS if c in by_channel]
+    order += sorted(c for c in by_channel if c not in CHANNELS)
+    for channel in order:
+        c = by_channel[channel]
+        label = channel if channel in CHANNELS else f"{channel} (not a known channel)"
+        lines.append(
+            f"| {label} | {c['apps']} | {c['human']} | {c['rej_no']} | {c['rej_unknown']} |"
+        )
+    lines += [
+        "",
+        "A channel that reaches people where the portal does not is where the next "
+        "applications should go.",
+        "",
         "## How to read the Class column",
         "",
         "- **scoring**: the software ranks or tests candidates itself. Shared rejections across "
         "employers are most likely here, so a flag is a strong signal.",
         "- **routing**: the software stores applications and the employer's recruiters screen "
         "them. A flag more likely shows where your target companies post than a shared verdict.",
+        "",
+        SOURCE,
     ]
     return "\n".join(lines) + "\n"
 
 
 def fill(jobs: list[dict]) -> int:
-    """Add vendor, channel and human_contact where they are missing. Never overwrite a value."""
+    """Add vendor, channel and human_contact where missing, and infer hidden vendors.
+
+    A value is never overwritten, except 'company-own' when every known posting of that
+    company uses one vendor (then vendor_inferred is set to true).
+    """
     changed = 0
     for j in jobs:
         if "vendor" not in j:
@@ -152,6 +211,12 @@ def fill(jobs: list[dict]) -> int:
             changed += 1
         if "human_contact" not in j:
             j["human_contact"] = derive_human_contact(j)
+            changed += 1
+    known = company_vendors(jobs)
+    for j in jobs:
+        if j.get("vendor") == "company-own" and _company(j) in known:
+            j["vendor"] = known[_company(j)]
+            j["vendor_inferred"] = True
             changed += 1
     return changed
 
@@ -164,7 +229,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--dir", default=".", help="the job search folder (default: current folder)")
     p.add_argument("--out", help="also write the report to this file inside the folder")
-    p.add_argument("--fill", action="store_true", help="add missing vendor/channel fields")
+    p.add_argument(
+        "--fill", action="store_true", help="add missing vendor/channel fields, infer vendors"
+    )
     p.add_argument("--today", help="override today's date, YYYY-MM-DD")
     args = p.parse_args(argv)
     try:

@@ -88,6 +88,23 @@ person wants into `boards`.
    key bullets)
 3. What is your strongest evidence to lead with? (`resume.lead_evidence`)
 
+## Group 7: reaching people
+
+Portals often reject people with no human ever reading the application. A short note to
+the person who owns the role helps. Ask:
+
+1. "When a role fits, should I also find its hiring manager or recruiter and draft a short
+   note for you to send? I use the `hiring-contact-finder` skill for this. It uses only
+   public, professional sources (not LinkedIn), and you always send the note yourself."
+   (`outreach.find_contacts`: `ask` to offer it after each run, `auto` to do it for every
+   reported role, or `never`; default: `ask`)
+2. Only for `auto`: "At most how many roles per run?" Each search takes many web searches.
+   (`outreach.max_per_run`; default: 3)
+
+Check that `hiring-contact-finder` is available to you. It ships in the same plugin
+(`emad-jobs`). If it is not installed, say so and record the answer anyway: runs then
+report "contact search skipped: hiring-contact-finder is not installed".
+
 ## Build the search keywords
 
 The board poller keeps a posting only when its title contains one of

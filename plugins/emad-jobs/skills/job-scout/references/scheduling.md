@@ -22,6 +22,9 @@ profile and say so in the log.
   Run intake in `<folder>`."
 - Do every step of the run workflow, including housekeeping. Write the log entry even when
   nothing is new.
+- **Contact search** follows `outreach.find_contacts`: with `ask` (the default), do not
+  search, only list the roles it is available for; with `auto`, run it for at most
+  `outreach.max_per_run` roles ([outreach.md](outreach.md)).
 - **Never** apply, sign in, accept terms, or send a message. Prepare; the person acts.
 - If a step fails (no network, a script error, an unreadable tracker), stop writing, keep
   the backups, and report the failure.
