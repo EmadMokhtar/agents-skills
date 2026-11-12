@@ -8,6 +8,7 @@ the first write of each day.
 
 from __future__ import annotations
 
+import errno
 import json
 import os
 import re
@@ -39,7 +40,28 @@ VENDOR_DOMAINS = (
 
 
 class FolderError(ValueError):
-    """A path is outside the job search folder, or a required file is missing."""
+    """A path is outside the job search folder, a required file is missing, or a file in the
+    folder cannot be read or written."""
+
+
+def missing_folder(root: Path) -> str:
+    return (
+        f"the job search folder {root} does not exist here. If it is on the person's computer "
+        "and this agent runs somewhere else (for example in a chat app's sandbox), use upload "
+        "mode: see references/environments.md"
+    )
+
+
+def os_problem(exc: OSError, action: str = "use", path: Path | str | None = None) -> str:
+    """Say in plain words why a file could not be read or written."""
+    where = path or exc.filename or "a file in the job search folder"
+    if exc.errno in (errno.EACCES, errno.EPERM, errno.EROFS):
+        return (
+            f"cannot {action} {where}: permission denied. The folder is read-only, or this "
+            f"agent is not allowed to {action} files there. Run check_folder.py --dir <folder> "
+            "to see what works here (references/environments.md)"
+        )
+    return f"cannot {action} {where}: {exc.strerror or exc}"
 
 
 def today_iso(value: str | None = None) -> str:
@@ -61,13 +83,23 @@ def resolve_in(root: Path, path: str | Path) -> Path:
 
 
 def write_text(path: Path, text: str) -> None:
-    """Write a file atomically, so a crash never leaves half a file behind."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    """Write a file atomically, so a crash never leaves half a file behind.
+
+    A write the operating system refuses (a read-only folder, a full disk) raises FolderError
+    with a plain message, so the scripts print it instead of a traceback.
+    """
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.", suffix=".tmp")
+    except OSError as exc:
+        raise FolderError(os_problem(exc, "write", path)) from None
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(text)
         os.replace(tmp, path)
+    except OSError as exc:
+        Path(tmp).unlink(missing_ok=True)
+        raise FolderError(os_problem(exc, "write", path)) from None
     except BaseException:
         Path(tmp).unlink(missing_ok=True)
         raise
@@ -81,7 +113,11 @@ def read_json(path: Path):
     try:
         return json.loads(path.read_text(encoding="utf-8"))
     except FileNotFoundError:
+        if not path.parent.is_dir():
+            raise FolderError(missing_folder(path.parent)) from None
         raise FolderError(f"{path} does not exist") from None
+    except OSError as exc:
+        raise FolderError(os_problem(exc, "read", path)) from None
     except json.JSONDecodeError as exc:
         raise FolderError(f"{path} is not valid JSON: {exc}") from None
 
@@ -115,7 +151,13 @@ def backup(root: Path, today: str, always: bool = False) -> list[Path]:
 
 
 def load_tracker(root: Path) -> dict:
-    data = read_json(Path(root) / "jobs.json")
+    root = Path(root)
+    if root.is_dir() and not (root / "jobs.json").exists():
+        raise FolderError(
+            f"jobs.json does not exist in {root}. For a new job search, run "
+            "check_folder.py --dir <folder> --init, then intake (references/intake.md)"
+        )
+    data = read_json(root / "jobs.json")
     if not isinstance(data, dict) or not isinstance(data.get("jobs"), list):
         raise FolderError("jobs.json must be an object with a 'jobs' list")
     return data

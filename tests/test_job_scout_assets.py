@@ -23,6 +23,7 @@ COMMANDS = [
     "sync_resumes",
     "vendor_report",
     "profile_yaml",
+    "check_folder",
 ]
 
 

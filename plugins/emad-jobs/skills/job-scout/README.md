@@ -91,8 +91,23 @@ Pair it with
 [`hiring-contact-finder`](https://emadmokhtar.github.io/agents-skills/skills/emad-jobs/hiring-contact-finder/)
 to reach the hiring manager behind a role.
 
+## Where it runs
+
+The skill keeps your files between runs, so where the agent runs matters. It checks this
+first, with `check_folder.py`.
+
+| Where | How it works |
+| --- | --- |
+| A coding agent (Claude Code, Codex, Cursor, GitHub Copilot) or a desktop app with a connected folder | **Folder mode.** It reads and writes your job search folder directly. Scheduled runs work. |
+| A chat app that runs code in a sandbox (Claude.ai, ChatGPT) | **Upload mode.** You upload your files, or the folder as a .zip. It works on a copy and gives back every changed file. Replace your copies with them, or the next run will not know about this one. No scheduled runs. |
+| A chat with no code | **Chat-only.** Intake, checking one job link, and drafting notes. No tracker. |
+
+A chat app's sandbox may block the job board APIs. Then the skill says so, and reads the
+boards with its web tools if it has them.
+
 ## Requirements
 
-- HTTP access to public job board APIs, and a way to open web pages.
+- HTTP access to public job board APIs (or a web browsing tool), and a way to open web
+  pages.
 - Python 3.9 or newer for the bundled scripts; `python-docx` for resume tailoring.
 - Optional: LibreOffice for PDF resumes, and `pdftotext` (poppler) to check them.

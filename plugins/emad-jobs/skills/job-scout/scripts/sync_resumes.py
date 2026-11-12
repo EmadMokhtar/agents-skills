@@ -20,7 +20,8 @@ Usage:
   python3 sync_resumes.py --dir ~/job-search --apply      # archive and resync
   python3 sync_resumes.py --dir ~/job-search --apply --no-pdf
 
-Lines to report to the user: MISSING, PDF FAILED, PDF STALE, PAGE COUNT, CANNOT RESYNC.
+Lines to report to the user: MISSING, PDF FAILED, PDF STALE, PAGE COUNT, CANNOT RESYNC,
+CANNOT ARCHIVE.
 The exit code is 1 when any of them appears.
 """
 
@@ -33,7 +34,7 @@ import shutil
 import sys
 from pathlib import Path
 
-from jobfiles import FolderError, load_tracker, resolve_in, save_tracker, today_iso
+from jobfiles import FolderError, load_tracker, os_problem, resolve_in, save_tracker, today_iso
 from profile_yaml import ProfileError, get, load
 from tailor_resume import (
     TailorError,
@@ -178,14 +179,19 @@ def main(argv: list[str] | None = None) -> int:
             if path.exists() and archive_dir not in path.parents:
                 archived.append(f"[{status}] {path.name}")
                 if args.apply:
-                    archive_dir.mkdir(parents=True, exist_ok=True)
-                    stem = _archive_stem(archive_dir, path.stem)
-                    for suffix in SUFFIXES:
-                        src = path.parent / f"{path.stem}{suffix}"
-                        if src.exists():
-                            shutil.move(str(src), str(archive_dir / f"{stem}{suffix}"))
-                    job["resume"] = (archive_dir / f"{stem}.docx").relative_to(root).as_posix()
-                    tracker_changed = True
+                    try:
+                        archive_dir.mkdir(parents=True, exist_ok=True)
+                        stem = _archive_stem(archive_dir, path.stem)
+                        for suffix in SUFFIXES:
+                            src = path.parent / f"{path.stem}{suffix}"
+                            if src.exists():
+                                shutil.move(str(src), str(archive_dir / f"{stem}{suffix}"))
+                    except OSError as exc:
+                        failures.append(f"CANNOT ARCHIVE  {label}: {os_problem(exc, 'move')}")
+                    # Point the tracker at the archive only once the .docx itself has moved.
+                    if not path.exists():
+                        job["resume"] = (archive_dir / f"{stem}.docx").relative_to(root).as_posix()
+                        tracker_changed = True
             continue
 
         live = status in LIVE or (status in SENT and args.resync_applied)
@@ -200,7 +206,11 @@ def main(argv: list[str] | None = None) -> int:
                     frozen.append(f"{label} ({len(changes)} line(s) differ)")
             continue
 
-        changes, problems = resync(path, base_texts, apply=args.apply)
+        try:
+            changes, problems = resync(path, base_texts, apply=args.apply)
+        except OSError as exc:
+            failures.append(f"CANNOT RESYNC  {label}: {os_problem(exc, 'write')}")
+            continue
         failures += problems
         pdf = path.with_suffix(".pdf")
         facts = [para_text(x) for x in paragraphs(document(str(path))) if is_fact(para_text(x))]
@@ -223,7 +233,10 @@ def main(argv: list[str] | None = None) -> int:
             failures += check_pdf(rendered, facts, pages)
 
     if tracker_changed:
-        save_tracker(root, data, today)
+        try:
+            save_tracker(root, data, today)
+        except FolderError as exc:
+            failures.append(f"TRACKER NOT SAVED  {exc}")
 
     verb = "Moved" if args.apply else "Would move"
     print(f"== ARCHIVE == {verb} {len(archived)} resume(s) to resumes/_archive/")

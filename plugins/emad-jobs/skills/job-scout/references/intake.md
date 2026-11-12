@@ -128,6 +128,9 @@ The board poller keeps a posting only when its title contains one of
 3. Show a short summary, grouped like the questions, with every default marked
    "(default)". Ask: "Is this right? Anything to change before the first search?"
 4. Only after the person confirms, offer the first run.
+5. In upload mode ([environments.md](environments.md)), give back `profile.yaml` and every
+   file `check_folder.py --init` created, and tell the person to keep them in their job
+   search folder.
 
 ## Changing the profile later
 

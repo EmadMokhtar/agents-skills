@@ -32,7 +32,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
-from jobfiles import FolderError, read_json, resolve_in, write_json
+from jobfiles import FolderError, os_problem, read_json, resolve_in, write_json
 from profile_yaml import ProfileError, get, load
 
 ENDPOINTS = {
@@ -377,11 +377,18 @@ def main(argv: list[str] | None = None) -> int:
         out = resolve_in(root, args.out)
         config = read_json(root / "search-config.json")
         profile = load(root / "profile.yaml")
-    except (FolderError, ProfileError, OSError) as exc:
+    except (FolderError, ProfileError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
+    except OSError as exc:
+        print(f"error: {os_problem(exc, 'read')}", file=sys.stderr)
+        return 1
     result = poll(config, Rules.from_profile(profile), fetch_json, args.workers, args.timeout)
-    write_json(out, result)
+    try:
+        write_json(out, result)
+    except FolderError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 1
     boards = result["boards"]
     by_status = {
         s: [k for k, v in boards.items() if v["status"] == s] for s in ("ok", "dead", "error")

@@ -15,6 +15,10 @@ profile and say so in the log.
 
 ## Rules for an unattended run
 
+- **Folder mode only.** An unattended run needs a folder that stays: a coding agent or a
+  desktop app with a connected folder ([environments.md](environments.md)). Start with
+  `check_folder.py --dir <folder> --network`. If the folder cannot be used, stop and
+  notify: "The job search could not run: <the FAIL line>."
 - **Ask no questions.** When something is unclear, choose the safe option, state the
   assumption in the log ("Assumed: the Berlin office role needs relocation, so it was not
   added"), and continue.

@@ -4,6 +4,7 @@ and the archive + resync housekeeping. LibreOffice is never started: rendering i
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -15,6 +16,10 @@ from job_scout import job, load, read_jobs, write_jobs
 
 tailor = load("tailor_resume")
 sync = load("sync_resumes")
+
+NOT_ROOT = pytest.mark.skipif(
+    hasattr(os, "geteuid") and os.geteuid() == 0, reason="root can write to read-only files"
+)
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
@@ -402,3 +407,41 @@ def test_relative_base_and_edits_are_read_from_the_folder(tmp_path, monkeypatch)
     )
     assert code == 0
     assert texts(folder / OUT)[2] == "Go engineer."
+
+
+# --- read-only folders and files ------------------------------------------------------------
+
+
+@NOT_ROOT
+def test_tailoring_into_a_read_only_folder_gives_a_clean_error(tmp_path, capsys):
+    (tmp_path / "resumes").mkdir()
+    (tmp_path / "resumes").chmod(0o555)
+    edits = [{"match": "alex@example.com", "kind": "plain", "text": "alex@example.com"}]
+    try:
+        assert tailor_run(tmp_path, edits, "--no-pdf") == 1
+    finally:
+        (tmp_path / "resumes").chmod(0o755)
+    assert capsys.readouterr().err.startswith("error: cannot write")
+
+
+@NOT_ROOT
+def test_a_resume_that_cannot_be_archived_is_reported_and_stays_tracked(tmp_path, capsys):
+    folder = housekeeping_folder(tmp_path, {"gone": "rejected"})
+    (folder / "resumes").chmod(0o555)
+    try:
+        assert sync.main(["--dir", str(folder), "--apply", "--no-pdf"]) == 1
+    finally:
+        (folder / "resumes").chmod(0o755)
+    out = capsys.readouterr().out
+    assert "CANNOT ARCHIVE" in out and "permission denied" in out
+    assert (folder / "resumes" / "gone.docx").exists()
+    assert read_jobs(folder)[0]["resume"] == "resumes/gone.docx"
+
+
+@NOT_ROOT
+def test_a_read_only_resume_is_reported_instead_of_resynced(tmp_path, capsys):
+    folder = housekeeping_folder(tmp_path, {"live": "new"})
+    (folder / "resumes" / "live.docx").chmod(0o444)
+    assert sync.main(["--dir", str(folder), "--apply", "--no-pdf"]) == 1
+    out = capsys.readouterr().out
+    assert "CANNOT RESYNC" in out and "permission denied" in out

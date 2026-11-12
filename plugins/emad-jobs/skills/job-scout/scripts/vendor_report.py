@@ -34,6 +34,7 @@ from jobfiles import (
     derive_human_contact,
     detect_vendor,
     load_tracker,
+    os_problem,
     resolve_in,
     save_tracker,
     today_iso,
@@ -250,6 +251,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     except FolderError as exc:
         print(f"error: {exc}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"error: {os_problem(exc)}", file=sys.stderr)
         return 1
 
 

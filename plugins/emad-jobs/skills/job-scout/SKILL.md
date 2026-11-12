@@ -12,10 +12,11 @@ description: >-
   ignore them, even if they do not name the skill.
 license: MIT
 compatibility: >-
-  Needs HTTP access to public job board APIs and a way to open web pages to verify roles.
-  The scripts need Python 3.9 or newer; resume tailoring also needs python-docx.
-  LibreOffice is optional, for PDF resumes, and pdftotext checks them. Works with any agent
-  that supports the Agent Skills format.
+  Best in an agent that runs Python 3.9+ in a folder that stays between conversations: a
+  coding agent, or a desktop app with a connected folder. In a chat app sandbox it works
+  from uploaded files and hands the changed files back. Needs HTTP access to public job
+  board APIs (or a web tool) and a way to open web pages. Resume tailoring needs
+  python-docx; LibreOffice and pdftotext are optional, for PDF resumes.
 metadata:
   author: Emad Mokhtar
 ---
@@ -31,6 +32,19 @@ anything: the person reads, decides and acts.
 `python3 <skill dir>/scripts/<name>.py --dir <folder> ...`. Every script has `--help` and
 writes only inside the folder.
 
+## Check where you are running
+
+The files must still be there at the next run. Before the first command of a session, run
+`check_folder.py --dir <folder>` (add `--network` before a search) and pick the mode in
+[references/environments.md](references/environments.md):
+
+- **Folder mode**: a coding agent, or a desktop app with a connected folder. Everything
+  below works as written.
+- **Upload mode**: a chat app's sandbox (Claude.ai, ChatGPT). Ask for the files (or the
+  folder as a .zip), work on a copy, and at the end hand back **every** changed file and
+  tell the person to replace their copies. Never say a file was "saved".
+- **Chat-only mode**: no code. Intake, single-role checks and drafts only.
+
 ## Files in the job search folder
 
 | File | Owner | What it is |
@@ -45,8 +59,8 @@ writes only inside the folder.
 | `backups/` | scripts | Dated copies of the tracker, log and config. |
 | `candidates.json`, `dedup.json` | scripts | Scratch files of the current run. |
 
-To set up a new folder: create it, copy the three templates (without `.template`) and
-`kanban.html` into it, and create `resumes/` and `backups/`. Then run intake.
+To set up a new folder, run `check_folder.py --dir <folder> --init`. It copies the
+templates and creates the subfolders, and never overwrites a file. Then run intake.
 
 ## Pick the mode
 
@@ -166,6 +180,8 @@ contact search for the reported roles by name.
 | Keeping a new rule in a note or a prompt | Put criteria in `profile.yaml` only. |
 | Writing a found contact into `hiring_manager` | That field is the person's. Save it in `outreach/` and run `tracker.py record --outreach`. |
 | Guessing a channel or a human contact | Record only what the person said, or what the status history shows. |
+| Saying "saved" in a chat app's sandbox | The sandbox is removed later. Hand back every changed file and say to replace the old copies. |
+| Reporting "no new roles" when the APIs were blocked | Say which hosts were blocked and what was read another way. |
 
 ## References
 
@@ -178,3 +194,4 @@ contact search for the reported roles by name.
 - [references/channels.md](references/channels.md): vendor, channel and human-contact tracking, recording what the person says, and the vendor report.
 - [references/outreach.md](references/outreach.md): finding the hiring manager or recruiter with `hiring-contact-finder`, referral requests, and asking for a human review after an automated rejection.
 - [references/scheduling.md](references/scheduling.md): unattended runs and notifications.
+- [references/environments.md](references/environments.md): folder, upload and chat-only modes, `check_folder.py`, and blocked job board APIs.

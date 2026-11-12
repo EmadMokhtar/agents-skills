@@ -42,7 +42,15 @@ import sys
 import tempfile
 from pathlib import Path
 
-from jobfiles import FolderError, load_tracker, resolve_in, save_tracker, today_iso, write_text
+from jobfiles import (
+    FolderError,
+    load_tracker,
+    os_problem,
+    resolve_in,
+    save_tracker,
+    today_iso,
+    write_text,
+)
 from profile_yaml import ProfileError, get, load
 
 W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
@@ -503,8 +511,11 @@ def main(argv: list[str] | None = None) -> int:
         doc = document(str(base))
         apply_edits(doc, edits)
 
-        out.parent.mkdir(parents=True, exist_ok=True)
-        doc.save(str(out))
+        try:
+            out.parent.mkdir(parents=True, exist_ok=True)
+            doc.save(str(out))
+        except OSError as exc:
+            raise FolderError(os_problem(exc, "write", out)) from None
         scrub_docx(out, base)
         write_text(out.with_suffix(".edits.json"), json.dumps(edits, indent=2, ensure_ascii=False))
         print(f"applied {len(edits)} edit(s) -> {out.relative_to(root)}")
@@ -525,8 +536,11 @@ def main(argv: list[str] | None = None) -> int:
             print(problem)
         print(f"pdf -> {pdf.relative_to(root)}" if not problems else "PDF has problems; see above")
         return 1 if problems else 0
-    except (TailorError, FolderError, ProfileError, OSError, json.JSONDecodeError) as exc:
+    except (TailorError, FolderError, ProfileError, json.JSONDecodeError) as exc:
         print(f"error: {exc}", file=sys.stderr)
+        return 1
+    except OSError as exc:
+        print(f"error: {os_problem(exc)}", file=sys.stderr)
         return 1
 
 
