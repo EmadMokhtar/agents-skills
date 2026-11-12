@@ -1,0 +1,142 @@
+# job-scout profile: the ONLY place for this person's search criteria.
+# The intake step fills it in. The person can edit it at any time; the next run uses it.
+#
+# Format: a small, strict part of YAML, so the scripts need no extra packages.
+# - `key: value`, or `key:` with an indented block under it (2 spaces, never tabs)
+# - lists are one `- item` per line; `[]` means an empty list
+# - quote a value that contains ": " or starts with a symbol, for example "C#"
+# - only `true` and `false` are booleans; leave a value empty for "not set"
+# Check it with: python3 scripts/profile_yaml.py profile.yaml
+#
+# Every question in intake can be skipped. A skipped field keeps the default below, and
+# the summary at the end of intake lists which defaults are in use.
+
+# The day intake ran (YYYY-MM-DD).
+created:
+# The day the profile last changed (YYYY-MM-DD).
+updated:
+
+# What kind of role to look for.
+role:
+  # Job titles the person wants, in their own words.
+  target_titles:
+    - Staff Software Engineer
+  # Seniority levels that count as a match, for example Staff, Principal.
+  levels:
+    - Staff
+  # Other titles that can be the same level in some markets or companies, for example
+  # "Solution Architect" or "Tech Lead" in some EU markets. These pass only after the body
+  # passes equivalent_titles_check below.
+  equivalent_titles: []
+  # The content test for an equivalent title (default: hands-on individual contributor, no
+  # people management, no sales quota).
+  equivalent_titles_check: "Read the body: hands-on IC scope, no people management, no sales quota or pre-sales."
+  # Titles to drop at once, for example Manager, Director, Intern.
+  excluded_titles: []
+  # One lower title the person accepts only at a short list of companies.
+  lower_title_exception:
+    # The lower level, for example Senior. Empty means no exception.
+    title_level:
+    # The companies where the lower title is accepted (top-tier list). Exact names.
+    allowed_at: []
+    # The test, in the person's words, for example "AI is the core product".
+    test:
+
+# What the work itself should be.
+work:
+  # Work the person wants to do, for example "agent tooling", "developer platforms".
+  wanted: []
+  # Work the person does not want. A role that is mainly this scores at most 6.
+  unwanted: []
+  # Company types the person wants, for example "product company", "AI-native".
+  company_types: []
+  # Industries to drop, for example gambling, defense.
+  excluded_industries: []
+  # Whether consultancies and agencies are acceptable employers (default: false).
+  allow_consultancies: false
+  # Technologies the person knows well. A hard must-have outside this list is a watch-out.
+  stack: []
+
+# Where the person can work from.
+location:
+  # Where the person lives, city and country.
+  home_base:
+  # Accepted work styles: remote, hybrid, office.
+  work_styles:
+    - remote
+    - hybrid
+  # Where an office is acceptable for hybrid or office work, for example a country or a
+  # commuting area.
+  office_areas: []
+  # Whether the person will move for a job (default: false).
+  relocation: false
+  # Where the person would move, when relocation is true.
+  relocation_targets: []
+  # Work authorization exactly as the person states it. Never inferred from a name,
+  # nationality or location. Empty means unknown: say "unknown" in reports.
+  work_authorization:
+  # Countries the person can be employed from for remote roles. A remote role must list one
+  # of these (or say "worldwide") to pass.
+  remote_countries: []
+  # Time zones the person can work in, for example CET.
+  time_zones: []
+  # Highest share of travel the person accepts, in percent. Empty means no limit set.
+  max_travel_percent:
+
+# Money and contract.
+money:
+  # Lowest acceptable yearly base salary, as a number. Empty means no floor.
+  salary_floor:
+  # Currency of the salary floor, for example EUR.
+  currency:
+  # Accepted employment types: permanent, contract.
+  employment_types:
+    - permanent
+  # Fewest hours per week the person accepts. Part-time roles below this are dropped.
+  min_hours_per_week: 32
+
+# How the search runs.
+search:
+  # Companies to check on every run, by exact name.
+  priority_companies: []
+  # Words that must appear somewhere in a title for the board poller to keep a posting.
+  # Intake builds this from levels and equivalent titles. Matched anywhere in the title.
+  title_keywords:
+    - Staff
+  # Places that keep a posting in the board poller. Remote and unknown locations are
+  # always kept, because the body must be read for the real location rules.
+  location_keywords: []
+  # Lowest score (out of 10) that is reported as a match (default: 7).
+  report_threshold: 7
+  # When to run, in plain words, for example "weekdays at 07:00".
+  schedule:
+  # Send a notification only when there is something new, or the run failed (default: true).
+  notify_only_on_news: true
+
+# The resume used for tailoring.
+resume:
+  # Path to the base resume .docx, absolute or relative to this folder.
+  base_docx:
+  # Parts of the resume tailoring may change (default: summary, skills, key bullets).
+  editable_sections:
+    - summary
+    - skills
+    - key bullets
+  # The strongest evidence to lead with, in the person's words.
+  lead_evidence: []
+  # Expected page count of every tailored copy. Empty means "the same as the base".
+  page_count:
+  # File name for tailored copies; {company} and {role} are filled in.
+  file_name: "{company} - {role}.docx"
+
+# Reaching a person behind a role. The hiring-contact-finder skill finds the hiring manager
+# or recruiter from public, professional sources and drafts a short note. The person always
+# sends it; the agent never does.
+outreach:
+  # When to look for the people behind a reported role: ask (offer it at the end of each
+  # run), auto (do it for each reported role, also in unattended runs), or never
+  # (default: ask).
+  find_contacts: ask
+  # The most contact searches in one run, highest score first. Each one takes many web
+  # searches (default: 3).
+  max_per_run: 3

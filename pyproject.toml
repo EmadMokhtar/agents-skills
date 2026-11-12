@@ -23,6 +23,7 @@ dev = [
     "skill-lens==0.25.0",
     "pre-commit>=4.6",
     "actionlint-py>=1.7.12",
+    "python-docx>=1.2",
 ]
 docs = [
     # MkDocs 2.0 removes the plugin system that gen-files and literate-nav use.
