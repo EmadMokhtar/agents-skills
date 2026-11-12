@@ -95,7 +95,9 @@ def test_the_skill_holds_no_personal_contact_details_or_local_paths():
     allowed_email = re.compile(r"(@example\.(com|org|net)|\.example)$")
     problems = []
     for path in SKILL.rglob("*"):
-        if not path.is_file():
+        # Python writes compiled .pyc files into __pycache__/ when other tests import the
+        # scripts. They are binary, git ignores them, and they never ship with the skill.
+        if not path.is_file() or "__pycache__" in path.parts:
             continue
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(SKILL)
