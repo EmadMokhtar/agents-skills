@@ -394,7 +394,8 @@ def test_record_human_contact_is_kept_as_the_users_answer(tmp_path):
     assert saved["human_contact"] is True and saved["human_contact_by"] == "user"
     assert run(tmp_path, "record", "--id", entry["id"], "--human-contact", "auto") == 0
     saved = read_jobs(tmp_path)[0]
-    assert saved["human_contact"] is False and "human_contact_by" not in saved
+    # "auto" gives the question back to the history. A rejection alone is unknown.
+    assert saved["human_contact"] is None and "human_contact_by" not in saved
 
 
 def test_record_outreach_needs_a_file_inside_the_folder(tmp_path, capsys):

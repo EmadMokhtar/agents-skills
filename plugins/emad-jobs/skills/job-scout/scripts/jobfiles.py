@@ -15,6 +15,7 @@ import re
 import tempfile
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse
 
 STATUSES = ("new", "applied", "in_process", "rejected", "archived")
 # Files that get a dated copy in backups/ before they change.
@@ -23,7 +24,8 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # How an application went in. The person decides; the agent records what they say.
 CHANNELS = ("portal", "referral", "hiring-manager-direct", "recruiter-inbound", "community")
 
-# Hiring software, found from the posting URL. Matching is by substring.
+# Hiring software, found from the posting URL's host name: the host is the domain or ends
+# in .<domain>. kanban.html has a copy of this list; a test keeps the two the same.
 VENDOR_DOMAINS = (
     ("myworkdayjobs.com", "Workday"),
     ("greenhouse.io", "Greenhouse"),
@@ -35,7 +37,8 @@ VENDOR_DOMAINS = (
     ("smartrecruiters.com", "SmartRecruiters"),
     ("recruitee.com", "Recruitee"),
     ("workable.com", "Workable"),
-    ("personio.", "Personio"),
+    ("personio.de", "Personio"),
+    ("personio.com", "Personio"),
 )
 
 
@@ -70,6 +73,14 @@ def today_iso(value: str | None = None) -> str:
     if not DATE_RE.match(value):
         raise FolderError(f"--today must look like 2026-11-10, got {value!r}")
     return value
+
+
+def job_folder(value: str | Path) -> Path:
+    """The job search folder from --dir, with a leading ~ expanded to the home folder.
+
+    An agent often passes "~/job-search" in quotes, and then the shell does not expand it.
+    """
+    return Path(os.path.expanduser(str(value))).resolve()
 
 
 def resolve_in(root: Path, path: str | Path) -> Path:
@@ -131,6 +142,9 @@ def backup(root: Path, today: str, always: bool = False) -> list[Path]:
     overwritten or deleted.
     """
     root = Path(root)
+    if not root.is_dir():
+        # Without this, a wrong --dir would back up nothing and still look like success.
+        raise FolderError(missing_folder(root))
     made = []
     for name in BACKED_UP:
         src = root / name
@@ -169,11 +183,20 @@ def save_tracker(root: Path, data: dict, today: str) -> None:
     write_json(Path(root) / "jobs.json", data)
 
 
+def _host(url: str) -> str:
+    """The host name of a URL, also when it has no scheme ("jobs.lever.co/acme/1")."""
+    try:
+        return urlparse(url if "//" in url else "//" + url).hostname or ""
+    except ValueError:
+        return ""
+
+
 def detect_vendor(url: str | None) -> str:
-    """Name the hiring software behind a posting URL."""
-    u = (url or "").lower()
+    """Name the hiring software behind a posting URL, from its host name."""
+    u = (url or "").strip().lower()
+    host = _host(u)
     for domain, name in VENDOR_DOMAINS:
-        if domain in u:
+        if host == domain or host.endswith("." + domain):
             return name
     # A company careers page can still run on Greenhouse: gh_jid / gh_src are its ids.
     if re.search(r"[?&]gh_(jid|src)=", u):
@@ -185,14 +208,13 @@ def derive_human_contact(job: dict):
     """Did a human ever take part in this application? True, False, or None (unknown).
 
     Reaching in_process always means yes. Otherwise an answer the person gave
-    (human_contact_by == "user") is kept: a named recruiter may have written without the
-    card moving. Otherwise a rejection with history means no, and anything else is unknown.
+    (human_contact_by == "user") is kept. Otherwise it is unknown, also after a rejection:
+    a named recruiter may have written or called without the card ever moving, so only the
+    person can say "no". The vendor report keeps a flag provisional until they do.
     """
     seen = [h.get("status") for h in job.get("history") or []]
     if "in_process" in seen:
         return True
     if job.get("human_contact_by") == "user":
         return job.get("human_contact")
-    if job.get("status") == "rejected" and seen:
-        return False
     return None

@@ -126,7 +126,7 @@ The agent never changes a status that you set. It never changes your notes or th
 
 If you used more than one way, choose the one that is **not** the portal.
 
-**Did a person contact you about this role?** Choose Yes if a named person wrote to you, called you or interviewed you. Choose No if only the system answered. You can also tell the agent, for example `An engineer at Acme referred me.`
+**Did a person contact you about this role?** Choose Yes if a named person wrote to you, called you or interviewed you. Choose No if only the system answered. Answer this after every rejection: until you do, the agent counts it as unknown, because a rejection alone does not show whether a person was involved. You can also tell the agent, for example `An engineer at Acme referred me.`
 
 The agent uses these answers to find which hiring platforms (the software that companies use to receive applications) and which channels get a person to reply. Ask `Which portals ignore me?` to see the result.
 

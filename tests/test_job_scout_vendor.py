@@ -32,7 +32,8 @@ def test_human_contact_comes_from_the_history():
     ghosted = job(status="rejected", history=[{"status": "applied"}, {"status": "rejected"}])
     waiting = job(status="applied", history=[{"status": "applied"}])
     assert vendor_report.derive_human_contact(reached) is True
-    assert vendor_report.derive_human_contact(ghosted) is False
+    # A rejection alone does not show that no person was involved.
+    assert vendor_report.derive_human_contact(ghosted) is None
     assert vendor_report.derive_human_contact(waiting) is None
 
 
@@ -60,9 +61,45 @@ def test_one_human_contact_clears_the_flag():
 
 
 def test_unknown_human_contact_makes_the_flag_provisional():
+    # A valid entry always has a history, so the unknown comes from human_contact alone.
     jobs = [rejected("Acme"), rejected("Globex"), rejected("Initech", human=None)]
-    jobs[2]["history"] = []
-    assert "PROVISIONAL" in vendor_report.report(jobs)
+    text = vendor_report.report(jobs)
+    assert "PROVISIONAL" in text
+    assert "**FLAGGED**" not in text
+
+
+def test_a_role_that_reached_in_process_counts_as_human_contact_when_unanswered():
+    reached = rejected("Initech", human=None)
+    reached["history"] = [{"status": "applied"}, {"status": "in_process"}, {"status": "rejected"}]
+    text = vendor_report.report([rejected("Acme"), rejected("Globex"), reached])
+    assert "FLAGGED" not in text and "PROVISIONAL" not in text
+
+
+def test_careers_pages_of_different_companies_are_never_flagged_as_one_vendor():
+    jobs = [rejected(c, vendor="company-own") for c in ("Acme", "Globex", "Initech")]
+    text = vendor_report.report(jobs)
+    assert "FLAGGED" not in text and "PROVISIONAL" not in text
+    assert "| company-own |" in text
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://www.clever.com/careers/1",
+        "https://acme.com/jobs/1?ref=https://jobs.lever.co/x",
+        "https://unworkable.com/jobs/1",
+        "https://xgreenhouse.io/jobs/1",
+        "https://personio.example.com/jobs/1",
+    ],
+)
+def test_detect_vendor_matches_the_host_not_any_text_in_the_url(url):
+    assert vendor_report.detect_vendor(url) == "company-own"
+
+
+def test_detect_vendor_knows_personio_and_urls_without_a_scheme():
+    assert vendor_report.detect_vendor("https://acme.jobs.personio.de/job/1") == "Personio"
+    assert vendor_report.detect_vendor("https://acme.jobs.personio.com/job/1") == "Personio"
+    assert vendor_report.detect_vendor("jobs.lever.co/acme/1") == "Lever"
 
 
 def test_new_roles_are_not_counted_as_applications():

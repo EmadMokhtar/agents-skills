@@ -241,7 +241,12 @@ let data = null;
 let fileHandle = null;
 const $ = s => document.querySelector(s);
 const statusEl = $("#status");
-const today = () => new Date().toISOString().slice(0,10);
+// The local date, like the agent's scripts. toISOString() would give the UTC date, which is
+// a day off late in the evening or early in the morning in many time zones.
+function today(){
+  const d = new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
 function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = "status" + (cls? " "+cls : ""); }
 
 function loadInitial(){
@@ -266,14 +271,22 @@ async function writeFile(){
   }catch(e){ setStatus("Could not write file: "+e.message, "warn"); return false; }
 }
 
+// Read a tracker file. Anything that is not a tracker (a syntax error, or another JSON file
+// such as search-config.json) throws, so the board never connects to it or writes over it.
+function parseTracker(text){
+  const parsed = JSON.parse(text);
+  if(Array.isArray(parsed)) return {meta:{}, jobs:parsed};
+  if(parsed && typeof parsed === "object" && Array.isArray(parsed.jobs)) return parsed;
+  throw new Error("this file is not a job tracker: it has no \"jobs\" list. Choose jobs.json");
+}
+
 // Re-read jobs.json just before every change, so roles that a scheduled run added while
 // this tab was open are kept. Without it, the board would write back its older copy.
 // Returns false when the file cannot be read; the change is then not made.
 async function refresh(){
   if(!fileHandle) return true;
   try{
-    const parsed = JSON.parse(await (await fileHandle.getFile()).text());
-    data = parsed.jobs ? parsed : {meta:{}, jobs:Array.isArray(parsed)?parsed:[]};
+    data = parseTracker(await (await fileHandle.getFile()).text());
     return true;
   }catch(e){ setStatus("Could not re-read jobs.json, so nothing was changed: "+e.message, "warn"); return false; }
 }
@@ -285,10 +298,10 @@ async function openFile(){
   }
   try{
     const [h] = await window.showOpenFilePicker({types:[{description:"JSON",accept:{"application/json":[".json"]}}]});
+    const opened = parseTracker(await (await h.getFile()).text());
+    // Connect only after the file reads as a tracker, so a wrong file is never written to.
     fileHandle = h;
-    const f = await h.getFile();
-    const parsed = JSON.parse(await f.text());
-    data = parsed.jobs ? parsed : {meta:{}, jobs:Array.isArray(parsed)?parsed:[]};
+    data = opened;
     persistLocal();
     render();
     setStatus("Connected to "+h.name+" — "+data.jobs.length+" jobs. Changes auto-save.", "ok");
@@ -297,9 +310,9 @@ async function openFile(){
 
 async function reloadFile(){
   if(!fileHandle){ setStatus("No file connected yet — click “Open jobs.json”.", "warn"); return; }
-  const f = await fileHandle.getFile();
-  const parsed = JSON.parse(await f.text());
-  data = parsed.jobs ? parsed : {meta:{}, jobs:parsed};
+  try{
+    data = parseTracker(await (await fileHandle.getFile()).text());
+  }catch(e){ setStatus("Could not reload jobs.json: "+e.message, "warn"); return; }
   persistLocal(); render();
   setStatus("Reloaded "+data.jobs.length+" jobs from file.", "ok");
 }
@@ -318,6 +331,18 @@ async function saveButton(){
   }
 }
 
+// Only web addresses become links. A javascript: or data: URL from a job feed would run
+// code on this page when clicked.
+function safeUrl(u){
+  const s = (u==null ? "" : String(u)).trim();
+  return /^https?:\/\//i.test(s) ? s : "";
+}
+// A score is shown only when it is a number, so text in the field never reaches the HTML.
+function scoreOf(v){
+  if(v==null || v==="") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
 function esc(s){ return (s==null?"":String(s)).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c])); }
 
 // ---- Age / staleness -------------------------------------------------------
@@ -426,7 +451,7 @@ function deriveHumanContact(job){
   const seen = (job.history||[]).map(h=>h.status);
   if(seen.includes("in_process")) return true;
   if(job.human_contact_by === "user") return job.human_contact;
-  if(job.status === "rejected") return false;
+  // A rejection alone does not show that no person was involved: only the user can say no.
   return null;
 }
 
@@ -450,7 +475,9 @@ async function moveJob(id, key){
 function cardEl(job){
   const el = document.createElement("div");
   el.className = "card"; el.draggable = true; el.dataset.id = job.id;
-  const scoreHtml = (job.score!=null) ? `<span class="score ${job.score<7?'low':''}">${job.score}/10</span>` : "";
+  const score = scoreOf(job.score);
+  const scoreHtml = (score!=null) ? `<span class="score ${score<7?'low':''}">${score}/10</span>` : "";
+  const link = safeUrl(job.url);
   const tags = [job.work_style, job.compensation].filter(Boolean).map(t=>`<span class="tag">${esc(t)}</span>`).join("");
   const watch = job.watch_out ? `<div class="watch">⚠ ${esc(job.watch_out)}</div>` : "";
   const lvl = staleLevel(job);
@@ -478,7 +505,7 @@ function cardEl(job){
     <div class="tags">${plat}${hc}${tags}</div>
     ${watch}
     <div class="card-actions">
-      ${job.url?`<a href="${esc(job.url)}" target="_blank" rel="noopener">Open posting ↗</a>`:""}
+      ${link?`<a href="${esc(link)}" target="_blank" rel="noopener">Open posting ↗</a>`:""}
       <button class="linkbtn editbtn" type="button">Details</button>
       ${noteFlag}
       <span class="age ${lvl}" title="${esc(age.title)}">${esc(age.text)}</span>
@@ -650,12 +677,17 @@ function render(){
 // ---- Add job modal ----
 const overlay = $("#overlay");
 // The hiring software behind a posting URL (the same rule as the agent's scripts).
+// The same list and rule as VENDOR_DOMAINS in scripts/jobfiles.py: the host is the domain or
+// ends in .<domain>. A test runs both on the same URLs.
 function detectVendor(url){
-  const u = (url||"").toLowerCase();
+  const u = (url||"").trim().toLowerCase();
   const known = [["myworkdayjobs.com","Workday"],["greenhouse.io","Greenhouse"],["lever.co","Lever"],
-    ["ashbyhq.com","Ashby"],["icims.com","iCIMS"],["smartrecruiters.com","SmartRecruiters"],
-    ["recruitee.com","Recruitee"],["workable.com","Workable"]];
-  for(const [domain,name] of known){ if(u.includes(domain)) return name; }
+    ["ashbyhq.com","Ashby"],["icims.com","iCIMS"],["eightfold.ai","Eightfold"],["hirevue.com","HireVue"],
+    ["smartrecruiters.com","SmartRecruiters"],["recruitee.com","Recruitee"],["workable.com","Workable"],
+    ["personio.de","Personio"],["personio.com","Personio"]];
+  let host = "";
+  try{ host = new URL(u.includes("//") ? u : "https://"+u).hostname; }catch(e){}
+  for(const [domain,name] of known){ if(host===domain || host.endsWith("."+domain)) return name; }
   if(/[?&]gh_(jid|src)=/.test(u)) return "Greenhouse";
   return u ? "company-own" : "unknown";
 }

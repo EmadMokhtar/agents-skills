@@ -174,3 +174,18 @@ def test_poll_boards_in_a_read_only_folder_gives_a_clean_error(read_only, monkey
     monkeypatch.setattr(poll_boards, "poll", lambda *a, **k: {"boards": {}, "candidates": []})
     assert poll_boards.main(["--dir", str(read_only)]) == 1
     assert capsys.readouterr().err.startswith("error: cannot write")
+
+
+def test_every_script_expands_a_tilde_in_dir(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    (tmp_path / "search").mkdir()
+    write_jobs(tmp_path / "search", [job()])
+    assert tracker.main(["--dir", "~/search", "validate"]) == 0
+    assert vendor_report.main(["--dir", "~/search"]) == 0
+    assert not (tmp_path / "~").exists()
+
+
+def test_backup_of_a_missing_folder_fails_instead_of_reporting_success(tmp_path, capsys):
+    assert tracker.main(["--dir", str(tmp_path / "nope"), "backup"]) == 1
+    assert "does not exist" in capsys.readouterr().err
+    assert not (tmp_path / "nope").exists()

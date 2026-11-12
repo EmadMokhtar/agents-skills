@@ -44,6 +44,7 @@ from pathlib import Path
 
 from jobfiles import (
     FolderError,
+    job_folder,
     load_tracker,
     os_problem,
     resolve_in,
@@ -174,29 +175,41 @@ def set_label_body(p_el, label: str, body: str) -> bool:
     return True
 
 
-def replace_span(p_el, old: str, new: str) -> bool:
-    """Replace one piece of text that may be split over several runs, touching only those runs.
+def replace_at(p_el, start: int, end: int, new: str) -> bool:
+    """Replace characters start to end of the paragraph's <w:t> text, touching only those runs.
 
     Word splits text at random points ("Jan 202" + "0 — Present"), so a date is rarely in
-    one <w:t>. Tabs are not inside <w:t>, so they are never touched.
+    one <w:t>. The new text goes into the run that holds the first replaced character, so it
+    keeps that run's formatting. An insertion (start == end) goes into the run that ends at
+    start. Tabs are not inside <w:t>, so they are never touched.
     """
     ts = texts(p_el)
-    joined = "".join(t.text or "" for t in ts)
-    at = joined.find(old)
-    if not ts or at == -1:
+    total = sum(len(t.text or "") for t in ts)
+    if not ts or not 0 <= start <= end <= total:
         return False
-    end, pos, first = at + len(old), 0, True
+    pos, placed = 0, False
     for t in ts:
         cur = t.text or ""
         lo, hi = pos, pos + len(cur)
         pos = hi
-        if hi <= at or lo >= end:
+        if start == end:
+            if not placed and (lo < start <= hi or start == lo == 0):
+                _set(t, cur[: start - lo] + new + cur[start - lo :])
+                placed = True
             continue
-        before = cur[: max(0, at - lo)]
-        after = cur[max(0, end - lo) :] if hi > end else ""
-        _set(t, before + (new if first else "") + after)
-        first = False
-    return True
+        if hi <= start or lo >= end:
+            continue
+        before = cur[: max(0, start - lo)]
+        after = cur[end - lo :] if hi > end else ""
+        _set(t, before + ("" if placed else new) + after)
+        placed = True
+    return placed
+
+
+def replace_span(p_el, old: str, new: str) -> bool:
+    """Replace the first place where old appears, even when it is split over several runs."""
+    at = "".join(t.text or "" for t in texts(p_el)).find(old)
+    return at != -1 and replace_at(p_el, at, at + len(old), new)
 
 
 # --- edits ------------------------------------------------------------------------------------
@@ -393,12 +406,45 @@ def render_pdf(docx_path: Path) -> Path | None:
     return target
 
 
+# Rendering the base takes seconds, so its page count is kept in the system temp folder,
+# keyed by the file's path, size and modification time. Losing this file only costs time.
+PAGE_CACHE = "job-scout-page-counts.json"
+PAGE_CACHE_SIZE = 50
+
+
+def page_target(root: Path, pages: int | None) -> int | None:
+    """The page count a tailored resume must have: --pages, else resume.page_count."""
+    if pages:
+        return pages
+    profile = root / "profile.yaml"
+    if not profile.is_file():
+        return None
+    value = get(load(profile), "resume.page_count")
+    if value in (None, ""):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        raise TailorError(f"resume.page_count must be a whole number, got {value!r}") from None
+
+
 def expected_pages(base: Path, pages: int | None) -> int | None:
     if pages:
         return pages
     base_pdf = base.with_suffix(".pdf")
     if base_pdf.exists():
         return pdf_pages(base_pdf)
+    stat = base.stat()
+    key = f"{base.resolve()}|{stat.st_size}|{stat.st_mtime_ns}"
+    cache = Path(tempfile.gettempdir()) / PAGE_CACHE
+    try:
+        known = json.loads(cache.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        known = {}
+    if not isinstance(known, dict):
+        known = {}
+    if isinstance(known.get(key), int):
+        return known[key]
     soffice = find_soffice()
     if soffice is None:
         return None
@@ -407,7 +453,15 @@ def expected_pages(base: Path, pages: int | None) -> int | None:
         shutil.copy(base, copy)
         run_soffice(soffice, copy, Path(tmp))
         produced = copy.with_suffix(".pdf")
-        return pdf_pages(produced) if produced.exists() else None
+        count = pdf_pages(produced) if produced.exists() else None
+    if count is not None:
+        known = dict(list(known.items())[-(PAGE_CACHE_SIZE - 1) :])
+        known[key] = count
+        try:
+            write_text(cache, json.dumps(known))
+        except FolderError:
+            pass  # Only a cache: the next call renders the base again.
+    return count
 
 
 def check_pdf(pdf: Path, must_contain: list[str], pages: int | None) -> list[str]:
@@ -457,13 +511,17 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--base", help="the base resume .docx (default: resume.base_docx)")
     p.add_argument("--out", required=True, help="the tailored .docx, inside the folder")
     p.add_argument("--edits", required=True, help="the edits JSON file")
-    p.add_argument("--pages", type=int, help="expected page count (default: the base's)")
+    p.add_argument(
+        "--pages",
+        type=int,
+        help="expected page count (default: resume.page_count, else the base's)",
+    )
     p.add_argument("--no-pdf", action="store_true", help="write the .docx only")
     p.add_argument("--job-id", help="record the resume on this role in jobs.json")
     args = p.parse_args(argv)
     try:
         document = need_docx()
-        root = resolve_in(Path(args.dir), ".")
+        root = job_folder(args.dir)
         out = resolve_in(root, args.out)
         if out.suffix.lower() != ".docx":
             raise TailorError("--out must end in .docx")
@@ -531,7 +589,7 @@ def main(argv: list[str] | None = None) -> int:
             print("PDF skipped: LibreOffice (soffice) is not installed. The .docx is ready.")
             return 0
         changed = [e.get("text") or e["label"] + e["body"] for e in edits]
-        problems = check_pdf(pdf, changed, expected_pages(base, args.pages))
+        problems = check_pdf(pdf, changed, expected_pages(base, page_target(root, args.pages)))
         for problem in problems:
             print(problem)
         print(f"pdf -> {pdf.relative_to(root)}" if not problems else "PDF has problems; see above")

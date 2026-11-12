@@ -26,13 +26,13 @@ from __future__ import annotations
 
 import argparse
 import sys
-from pathlib import Path
 
 from jobfiles import (
     CHANNELS,
     FolderError,
     derive_human_contact,
     detect_vendor,
+    job_folder,
     load_tracker,
     os_problem,
     resolve_in,
@@ -130,7 +130,10 @@ def report(jobs: list[dict]) -> str:
     for vendor, s in sorted(stats.items(), key=lambda kv: (-kv[1]["rej"], -kv[1]["apps"], kv[0])):
         cls = VENDOR_CLASS.get(vendor, "unknown")
         flag = "ok"
-        if s["rej"] >= 3 and s["human"] == 0:
+        if vendor in NOT_KNOWN:
+            # Companies' own careers pages share no software, so they are never flagged.
+            flag = "not flagged: no shared vendor"
+        elif s["rej"] >= 3 and s["human"] == 0:
             if s["rej_unknown"] == 0:
                 flag = "**FLAGGED**"
                 flagged.append((vendor, s, cls))
@@ -236,7 +239,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--today", help="override today's date, YYYY-MM-DD")
     args = p.parse_args(argv)
     try:
-        root = resolve_in(Path(args.dir), ".")
+        root = job_folder(args.dir)
         data = load_tracker(root)
         if args.fill:
             changed = fill(data["jobs"])

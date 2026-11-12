@@ -445,3 +445,49 @@ def test_a_read_only_resume_is_reported_instead_of_resynced(tmp_path, capsys):
     assert sync.main(["--dir", str(folder), "--apply", "--no-pdf"]) == 1
     out = capsys.readouterr().out
     assert "CANNOT RESYNC" in out and "permission denied" in out
+
+
+def _employer_line(path: Path, date: str) -> Path:
+    doc = Document()
+    p = doc.add_paragraph()
+    p.add_run("Acme Corp").bold = True
+    p.add_run(f" | {date} - Present")
+    doc.save(path)
+    return path
+
+
+def test_resync_changes_only_the_date_and_keeps_the_bold_run(tmp_path):
+    tailored = _employer_line(tmp_path / "tailored.docx", "Jan 2020")
+    changes, problems = sync.resync(tailored, ["Acme Corp | Mar 2020 - Present"], apply=True)
+    assert problems == []
+    assert len(changes) == 1
+    runs = [(r.text, bool(r.bold)) for r in Document(tailored).paragraphs[0].runs]
+    assert runs == [("Acme Corp", True), (" | Mar 2020 - Present", False)]
+
+
+def test_tailoring_checks_against_the_page_count_in_the_profile(tmp_path):
+    assert tailor.page_target(tmp_path, None) is None
+    (tmp_path / "profile.yaml").write_text("resume:\n  page_count: 2\n", encoding="utf-8")
+    assert tailor.page_target(tmp_path, None) == 2
+    assert tailor.page_target(tmp_path, 3) == 3
+
+
+def test_the_base_page_count_is_rendered_once_and_cached(tmp_path, monkeypatch):
+    base = make_resume(tmp_path / "base.docx")
+    (tmp_path / "tmp").mkdir()
+    monkeypatch.setattr(tailor.tempfile, "tempdir", str(tmp_path / "tmp"))
+    renders = []
+
+    def fake_soffice(soffice, docx_path, outdir):
+        renders.append(docx_path.name)
+        docx_path.with_suffix(".pdf").write_bytes(b"%PDF-1.4")
+
+    monkeypatch.setattr(tailor, "find_soffice", lambda: "soffice")
+    monkeypatch.setattr(tailor, "run_soffice", fake_soffice)
+    monkeypatch.setattr(tailor, "pdf_pages", lambda path: 2)
+    assert tailor.expected_pages(base, None) == 2
+    assert tailor.expected_pages(base, None) == 2
+    assert renders == ["base.docx"]
+    make_resume(base, date="Mar 2020")  # a changed base is rendered again
+    assert tailor.expected_pages(base, None) == 2
+    assert len(renders) == 2

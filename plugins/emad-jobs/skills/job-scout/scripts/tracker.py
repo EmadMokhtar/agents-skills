@@ -45,6 +45,7 @@ from jobfiles import (
     backup,
     derive_human_contact,
     detect_vendor,
+    job_folder,
     load_tracker,
     os_problem,
     read_json,
@@ -428,7 +429,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     try:
-        root = resolve_in(Path(args.dir), ".")
+        root = job_folder(args.dir)
         today = today_iso(args.today)
         if args.command == "backup":
             made = backup(root, today, always=True)

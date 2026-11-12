@@ -34,7 +34,15 @@ import shutil
 import sys
 from pathlib import Path
 
-from jobfiles import FolderError, load_tracker, os_problem, resolve_in, save_tracker, today_iso
+from jobfiles import (
+    FolderError,
+    job_folder,
+    load_tracker,
+    os_problem,
+    resolve_in,
+    save_tracker,
+    today_iso,
+)
 from profile_yaml import ProfileError, get, load
 from tailor_resume import (
     TailorError,
@@ -44,7 +52,7 @@ from tailor_resume import (
     para_text,
     paragraphs,
     render_pdf,
-    replace_span,
+    replace_at,
 )
 
 DEAD = ("rejected", "archived")
@@ -96,10 +104,22 @@ def resync(path: Path, base_texts: list[str], apply: bool) -> tuple[list, list]:
             continue
         changes.append((old, new))
         if apply:
+            # Replace only the characters that differ ("Jan" -> "Mar"), at their position,
+            # so the runs around them keep their own formatting. Tabs are not in the <w:t>
+            # text, so each part starts where the parts before it end.
+            at = 0
             # Same length is checked above. zip(strict=) needs Python 3.10; these run on 3.9.
             for o, n in zip(old_parts, new_parts):  # noqa: B905
-                if o != n and not replace_span(p, o, n):
+                if o == n:
+                    at += len(o)
+                    continue
+                k = len(os.path.commonprefix([o, n]))
+                m = len(os.path.commonprefix([o[k:][::-1], n[k:][::-1]]))
+                if replace_at(p, at + k, at + len(o) - m, n[k : len(n) - m]):
+                    at += len(n)
+                else:
                     problems.append(f"CANNOT RESYNC  {path.name}: could not place {n[:60]!r}")
+                    at += len(o)
     if apply and changes:
         doc.save(str(path))
     return changes, problems
@@ -143,7 +163,7 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
     try:
         document = need_docx()
-        root = resolve_in(Path(args.dir), ".")
+        root = job_folder(args.dir)
         today = today_iso(args.today)
         profile = load(root / "profile.yaml") if (root / "profile.yaml").exists() else {}
         base_name = args.base or get(profile, "resume.base_docx")

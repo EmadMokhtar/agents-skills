@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -162,4 +163,95 @@ console.log(JSON.stringify(cases.map(deriveHumanContact)));
 """
     )
     out = subprocess.run(["node", "-e", script], capture_output=True, text=True, check=True)
-    assert json.loads(out.stdout) == [False, True, False, True, None]
+    assert json.loads(out.stdout) == [None, True, False, True, None]
+
+
+NODE = pytest.mark.skipif(shutil.which("node") is None, reason="node is not installed")
+
+
+def _node(script: str, tz: str | None = None) -> str:
+    env = {**os.environ, "TZ": tz} if tz else None
+    out = subprocess.run(
+        ["node", "-e", script], capture_output=True, text=True, check=True, env=env
+    )
+    return out.stdout
+
+
+@NODE
+def test_the_board_names_the_same_vendor_as_the_scripts():
+    jobfiles = load("jobfiles")
+    urls = [f"https://acme.{domain}/jobs/1" for domain, _ in jobfiles.VENDOR_DOMAINS]
+    urls += [
+        "https://www.clever.com/careers/1",
+        "https://acme.com/jobs/1?ref=https://jobs.lever.co/x",
+        "https://careers.acme.com/j/1?gh_jid=123",
+        "jobs.lever.co/acme/1",
+        "https://acme.com/careers/1",
+        "not a url",
+        "",
+    ]
+    script = _kanban_function("detectVendor") + (
+        f"console.log(JSON.stringify({json.dumps(urls)}.map(detectVendor)));"
+    )
+    assert json.loads(_node(script)) == [jobfiles.detect_vendor(u) for u in urls]
+
+
+@NODE
+@pytest.mark.parametrize(
+    ("tz", "utc", "local"),
+    [
+        ("Pacific/Kiritimati", "2026-11-11T12:30:00Z", "2026-11-12"),
+        ("America/Lima", "2026-11-12T02:00:00Z", "2026-11-11"),
+    ],
+)
+def test_the_board_writes_the_local_date_not_the_utc_date(tz, utc, local):
+    fake_now = (
+        "const RealDate = Date; globalThis.Date = class extends RealDate { "
+        f"constructor(...a) {{ super(...(a.length ? a : [{json.dumps(utc)}])); }} }};\n"
+    )
+    script = fake_now + _kanban_function("today") + "console.log(today());"
+    assert _node(script, tz=tz).strip() == local
+
+
+@NODE
+def test_the_board_refuses_a_file_that_is_not_a_tracker():
+    texts = ['{"boards": {}}', '{"jobs": "x"}', "{bad json", '{"meta": {}, "jobs": []}', "[]"]
+    script = _kanban_function("parseTracker") + (
+        f"console.log(JSON.stringify({json.dumps(texts)}.map(t => {{"
+        " try { return parseTracker(t).jobs.length; } catch (e) { return 'error'; } })));"
+    )
+    assert json.loads(_node(script)) == ["error", "error", "error", 0, 0]
+
+
+def test_the_board_connects_a_file_only_after_it_reads_as_a_tracker():
+    body = _kanban_function("openFile")
+    assert body.index("parseTracker(") < body.index("fileHandle = h")
+    for name in ("refresh", "reloadFile"):
+        assert "parseTracker(" in _kanban_function(name), name
+
+
+@NODE
+def test_the_board_links_only_web_addresses_and_shows_only_numeric_scores():
+    urls = [
+        "https://example.com/a",
+        "HTTP://example.com",
+        "javascript:alert(1)",
+        " javascript:x",
+        "data:text/html,x",
+        "",
+        None,
+    ]
+    scores = [8, "7", "<img src=x>", None, "", "8.5"]
+    script = (
+        _kanban_function("safeUrl")
+        + _kanban_function("scoreOf")
+        + (
+            f"console.log(JSON.stringify([{json.dumps(urls)}.map(safeUrl),"
+            f" {json.dumps(scores)}.map(scoreOf)]));"
+        )
+    )
+    links, numbers = json.loads(_node(script))
+    assert links == ["https://example.com/a", "HTTP://example.com", "", "", "", "", ""]
+    assert numbers == [8, 7, None, None, None, 8.5]
+    card = _kanban_function("cardEl")
+    assert "safeUrl(job.url)" in card and "${job.score}" not in card

@@ -30,9 +30,8 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
-from pathlib import Path
 
-from jobfiles import FolderError, os_problem, read_json, resolve_in, write_json
+from jobfiles import FolderError, job_folder, os_problem, read_json, resolve_in, write_json
 from profile_yaml import ProfileError, get, load
 
 ENDPOINTS = {
@@ -373,7 +372,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timeout", type=float, default=20, help="seconds per request")
     args = p.parse_args(argv)
     try:
-        root = resolve_in(Path(args.dir), ".")
+        root = job_folder(args.dir)
         out = resolve_in(root, args.out)
         config = read_json(root / "search-config.json")
         profile = load(root / "profile.yaml")

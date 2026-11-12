@@ -20,7 +20,8 @@ see which channels work.
 - `true` once the role reached `in_process`. This always wins.
 - Otherwise, the person's own answer when `human_contact_by` is `user`. A named recruiter
   can write, call or interview without the card ever moving to In Process.
-- Otherwise `false` when the role was rejected, and `null` (unknown) for anything else.
+- Otherwise `null` (unknown), also after a rejection. A rejection alone does not show that
+  no person was involved, so only the person can set `false`. Ask them after a rejection.
 
 ### Inferred vendors
 

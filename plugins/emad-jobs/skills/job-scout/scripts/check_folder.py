@@ -33,7 +33,7 @@ from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import urlparse
 
-from jobfiles import FolderError, os_problem
+from jobfiles import FolderError, job_folder, os_problem
 from poll_boards import _jobs, fetch_json
 from profile_yaml import ProfileError, get, load
 from tailor_resume import MAC_SOFFICE
@@ -238,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     p.add_argument("--timeout", type=float, default=10, help="seconds per network check")
     args = p.parse_args(argv)
-    root = Path(os.path.expanduser(args.dir)).resolve()
+    root = job_folder(args.dir)
 
     if args.init:
         try:
