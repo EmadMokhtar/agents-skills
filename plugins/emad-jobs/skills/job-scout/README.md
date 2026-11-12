@@ -5,6 +5,8 @@ roles on company job boards, checks that each one is still open, scores it again
 criteria, keeps a tracker without duplicates, and prepares a tailored copy of your resume.
 It never applies or sends anything for you.
 
+New to job-scout? Read the [user manual](https://emadmokhtar.github.io/agents-skills/guides/job-scout/).
+
 ## When it triggers
 
 - "Find me jobs", "set up a job search", "daily job search", "track job postings".
@@ -23,10 +25,10 @@ It never applies or sends anything for you.
 2. **Search run.** It polls the public job APIs of companies' own hiring software (Ashby,
    Greenhouse, Lever) and two aggregators, checks each role is live, filters and scores it
    against your profile, and skips anything already in your tracker. It reports roles at or
-   above your threshold (7 out of 10 by default) and lists, in one line each, the roles it
-   checked and rejected, with the reason.
+   above your threshold (7 out of 10 by default) and lists, in one line each, the near
+   misses it rejected, with the reason.
 3. **Tracker and board.** Roles go into `jobs.json`. Open `kanban.html` in Chrome or Edge to
-   see them as a board and drag cards between New, Applied, In Process, Rejected and
+   see them as a board and drag cards between New / Found, Applied, In Process, Rejected and
    Archived. The agent never changes a status you set and never touches your notes.
 4. **Tailored resume.** For each reported role it makes a copy of your `.docx` resume that
    leads with your most relevant experience. It never adds a skill, a number or a job you
@@ -35,8 +37,9 @@ It never applies or sends anything for you.
 5. **Reaching people.** It can find the hiring manager or recruiter behind a reported role,
    with
    [`hiring-contact-finder`](https://emadmokhtar.github.io/agents-skills/skills/emad-jobs/hiring-contact-finder/),
-   and draft a short note for you to send. Intake asks whether it should do this for every
-   reported role, only when you ask, or never. It also drafts referral requests and, after
+   and draft a short note for you to send. Intake asks whether it should offer this after
+   each run, do it by itself for the top roles (3 per run by default), or do it only when
+   you ask. It also drafts referral requests and, after
    a fast automated rejection from an EU, EEA or UK employer, a request for a human review.
 6. **Housekeeping.** It archives resumes for dead roles, carries corrected dates from your
    base resume into the copies you have not sent yet, and reports which hiring platforms
