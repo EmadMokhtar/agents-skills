@@ -5,9 +5,13 @@ This page is for you, the person doing the job search. You do not need to read a
 ## Quick start
 
 1. Install the `emad-jobs` plugin. See [Install](#install).
-2. Open your agent in an empty folder, for example `~/job-search`. Say
-   `Set up my job search in ~/job-search.` Answer the questions. You can skip any of them.
-3. Every day, say `Run my job search.` Read the report. Then apply yourself.
+2. Make a folder, for example `~/job-search`. Put your resume (`.docx`) in it.
+3. Open your agent in that folder. Say `Set up my job search in ~/job-search.` Answer the
+   questions. You can skip any of them.
+4. Set the search to run every day by itself, as a scheduled task in your agent. See
+   [Scheduled runs](#scheduled-runs). A chat app cannot do this. You can also say
+   `Run my job search.` at any time.
+5. Read each report. Then apply yourself.
 
 That is all you need. The rest of this page explains each step. Read it when you need it.
 
@@ -22,7 +26,7 @@ job-scout is a *skill*: a set of instructions that an *agent* loads when a task 
 ## What you need
 
 - **An agent that can use skills.** The best choice is a coding agent (Claude Code, Codex, Cursor, GitHub Copilot) or a desktop app with a connected folder. This is *folder mode*. A chat app (Claude.ai, ChatGPT) also works, with extra steps: see [Using it in a chat app](#using-it-in-a-chat-app).
-- **A folder on your computer**, for example `~/job-search`. The `~` sign means your home folder.
+- **A folder on your computer**, for example `~/job-search`. The `~` sign means your home folder. Put your resume in this folder too, for example `~/job-search/resume.docx`. Then the agent always finds it, and in a chat app it goes into the same `.zip` file as the rest.
 - **Internet access**, to read public job lists.
 - **For tailored resumes (folder mode):** your resume as a `.docx` file (the Microsoft Word format), Python 3.9 or newer, and `python-docx`. Python is the programming language of the helper scripts. `python-docx` is a free add-on for `.docx` files.
 - **Optional:** LibreOffice (a free office program), to make a PDF copy of each resume. A PDF is a document file that looks the same on every computer.
@@ -37,7 +41,7 @@ Install the `emad-jobs` plugin (a bundle of skills). It contains job-scout and [
 
 Do this once.
 
-1. **Choose a folder.** Make a new, empty folder, for example `~/job-search`. Use the same folder every time. job-scout keeps all its files there.
+1. **Choose a folder.** Make a new folder, for example `~/job-search`, and copy your resume `.docx` into it. Use the same folder every time. job-scout keeps all its files there.
 2. **Open your agent with that folder.** Start a coding agent inside the folder, or connect the folder in your desktop app.
 3. **Say:** `Set up my job search in ~/job-search.`
     The agent checks the folder and creates the starting files. It never replaces a file that already exists.
@@ -57,7 +61,7 @@ You use two files in the folder: `kanban.html` (your board) and `profile.yaml` (
 
 ## Every day: run your search
 
-1. **Say:** `Run my job search.` A *run* is one search.
+1. **Say:** `Run my job search.` A *run* is one search. With a [scheduled task](#scheduled-runs), this happens by itself.
 2. **Wait for the report.** The agent backs up your files, reads the job lists, checks each job, scores it, saves the good ones, makes tailored resumes, and writes a log entry.
 3. **Read the report.** The next part explains it.
 4. **Act yourself.** Open the apply link and read the post. Read the tailored resume. Apply on the company's site. Then move the job's card to **Applied** on the board.
