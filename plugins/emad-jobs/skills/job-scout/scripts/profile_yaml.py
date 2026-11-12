@@ -150,7 +150,8 @@ def loads(text: str) -> dict:
 def load(path: str | Path) -> dict:
     path = Path(path)
     try:
-        return loads(path.read_text(encoding="utf-8"))
+        # utf-8-sig also reads a file that an editor saved with a byte order mark (BOM).
+        return loads(path.read_text(encoding="utf-8-sig"))
     except ProfileError as exc:
         raise ProfileError(f"{path}: {exc}") from None
 

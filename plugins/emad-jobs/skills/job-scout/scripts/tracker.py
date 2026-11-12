@@ -52,6 +52,7 @@ from jobfiles import (
     resolve_in,
     save_tracker,
     today_iso,
+    words,
     write_json,
 )
 
@@ -87,14 +88,8 @@ def job_ids(url: str) -> set[str]:
     return ids
 
 
-def _words(text: str) -> str:
-    text = re.sub(r"[^\w]+", " ", (text or "").lower())
-    text = re.sub(r"\b(sr|snr)\b", "senior", text)
-    return " ".join(text.split())
-
-
 def title_key(company: str, title: str) -> str:
-    return f"{_words(company)}|{_words(title)}"
+    return f"{words(company)}|{words(title)}"
 
 
 def _last(entry: dict) -> dict:
@@ -116,12 +111,12 @@ def archived_as_expired_by_agent(entry: dict) -> bool:
 
 
 def posting_key(company: str, title: str, location: str) -> str:
-    return f"{title_key(company, title)}|{_words(location)}"
+    return f"{title_key(company, title)}|{words(location)}"
 
 
 def company_ids(company: str, url: str) -> set[str]:
     """Job ids from the URL, tied to the company: two companies can reuse one number."""
-    return {f"{_words(company)}|{i}" for i in job_ids(url)}
+    return {f"{words(company)}|{i}" for i in job_ids(url)}
 
 
 def classify(candidates: list[dict], jobs: list[dict]) -> dict:
@@ -159,7 +154,7 @@ def classify(candidates: list[dict], jobs: list[dict]) -> dict:
             how = "job_id"
         if match is not None:
             info = {"id": match.get("id"), "status": match.get("status"), "by": how}
-            changed = _words(cand.get("title")) != _words(match.get("title")) or (
+            changed = words(cand.get("title")) != words(match.get("title")) or (
                 bool(cand.get("published"))
                 and bool(match.get("published"))
                 and cand["published"] != match["published"]
@@ -251,7 +246,7 @@ def warnings(data: dict) -> list[str]:
 
 
 def _slug(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", _words(text)).strip("-")[:70] or "role"
+    return re.sub(r"[^a-z0-9]+", "-", words(text)).strip("-")[:70] or "role"
 
 
 def _find(data: dict, job_id: str) -> dict:

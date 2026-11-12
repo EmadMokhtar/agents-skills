@@ -102,7 +102,8 @@ def test_ashby_postings_are_normalized_and_unlisted_ones_dropped():
 
 def test_greenhouse_content_is_unescaped_and_stripped():
     [p] = poll_boards.normalize_greenhouse("globex", "Globex", GREENHOUSE)
-    assert p["description"] == "We hire in the UK, Czechia or Italy."
+    # Normalizers keep the raw HTML; poll() cleans it only for postings it keeps.
+    assert poll_boards.strip_html(p["description"]) == "We hire in the UK, Czechia or Italy."
     assert p["location"] == "Remote - EMEA"
     assert p["remote"] is True
     assert p["published"] == "2026-10-30"
@@ -120,7 +121,7 @@ def test_aggregator_postings_are_leads_only():
     [j] = poll_boards.normalize_jobicy(JOBICY)
     assert a["lead"] is True and j["lead"] is True
     assert a["company"] == "Acme" and j["location"] == "Europe"
-    assert a["description"] == "Lead role"
+    assert poll_boards.strip_html(a["description"]) == "Lead role"
 
 
 # --- the prefilter --------------------------------------------------------------------------
@@ -264,3 +265,36 @@ def test_a_board_with_an_unexpected_payload_does_not_stop_the_poll(rules):
     result = poll_boards.poll(CONFIG, rules, odd, workers=2, timeout=5)
     assert result["boards"]["ashby:acme"]["status"] == "error"
     assert result["boards"]["greenhouse:globex"]["status"] == "ok"
+
+
+def test_poll_cleans_the_description_only_of_postings_it_keeps(rules, monkeypatch):
+    calls = []
+    real = poll_boards.strip_html
+    monkeypatch.setattr(poll_boards, "strip_html", lambda text: calls.append(text) or real(text))
+    office = {**GREENHOUSE["jobs"][0], "id": 999, "title": "Office Manager"}
+    with_office = {**GREENHOUSE, "jobs": [*GREENHOUSE["jobs"], office]}
+
+    def fetch(url, timeout):
+        return (200, with_office) if "greenhouse" in url else fake_fetch(url, timeout)
+
+    result = poll_boards.poll(CONFIG, rules, fetch, workers=2, timeout=5)
+    seen = sum(b.get("jobs", 0) for b in result["boards"].values())
+    assert seen > len(result["candidates"])  # some postings were dropped by the prefilter
+    assert len(calls) == len(result["candidates"])
+    assert all("<" not in c["description"] for c in result["candidates"])
+
+
+def test_the_command_fails_when_no_board_could_be_read(tmp_path, monkeypatch, capsys):
+    (tmp_path / "profile.yaml").write_text(
+        "search:\n  title_keywords:\n    - Staff\n", encoding="utf-8"
+    )
+    (tmp_path / "search-config.json").write_text(json.dumps(CONFIG), encoding="utf-8")
+
+    def blocked(url, timeout):
+        raise OSError("blocked by a proxy")
+
+    monkeypatch.setattr(poll_boards, "fetch_json", blocked)
+    assert poll_boards.main(["--dir", str(tmp_path)]) == 1
+    err = capsys.readouterr().err
+    assert "no board could be read" in err
+    assert "check_folder.py" in err

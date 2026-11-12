@@ -85,7 +85,8 @@ Also in upload mode:
 ## When the job board APIs are blocked
 
 A sandbox often lets only some hosts through. When `check_folder.py --network` shows a host
-as `BLOCKED`, `poll_boards.py` cannot read the boards on that host.
+as `BLOCKED`, `poll_boards.py` cannot read the boards on that host. When it can read no board
+at all, it exits with 1 and says "no board could be read".
 
 - Never report "no new roles" when the boards were not read. That would be false.
 - If you have a web fetch or browsing tool, open the same API URLs with it

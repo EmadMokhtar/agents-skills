@@ -18,8 +18,8 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 STATUSES = ("new", "applied", "in_process", "rejected", "archived")
-# Files that get a dated copy in backups/ before they change.
-BACKED_UP = ("jobs.json", "job-search.md", "search-config.json")
+# Files that get a dated copy in backups/ before they change. Intake rewrites profile.yaml.
+BACKED_UP = ("jobs.json", "job-search.md", "search-config.json", "profile.yaml")
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # How an application went in. The person decides; the agent records what they say.
 CHANNELS = ("portal", "referral", "hiring-manager-direct", "recruiter-inbound", "community")
@@ -122,7 +122,8 @@ def write_json(path: Path, data) -> None:
 
 def read_json(path: Path):
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        # utf-8-sig also reads a file that an editor saved with a byte order mark (BOM).
+        return json.loads(path.read_text(encoding="utf-8-sig"))
     except FileNotFoundError:
         if not path.parent.is_dir():
             raise FolderError(missing_folder(path.parent)) from None
@@ -181,6 +182,13 @@ def save_tracker(root: Path, data: dict, today: str) -> None:
     backup(root, today)
     data.setdefault("meta", {})["last_updated"] = today
     write_json(Path(root) / "jobs.json", data)
+
+
+def words(text: str | None) -> str:
+    """Lower-case words with punctuation removed, and "sr" or "snr" read as "senior"."""
+    text = re.sub(r"[^\w]+", " ", (text or "").lower())
+    text = re.sub(r"\b(sr|snr)\b", "senior", text)
+    return " ".join(text.split())
 
 
 def _host(url: str) -> str:

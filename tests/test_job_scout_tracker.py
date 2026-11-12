@@ -428,3 +428,21 @@ def test_validate_rejects_a_human_contact_that_is_not_true_false_or_null(tmp_pat
     write_jobs(tmp_path, [job(human_contact="maybe")])
     assert run(tmp_path, "validate") == 1
     assert "human_contact" in capsys.readouterr().err
+
+
+def test_backup_also_copies_the_profile(tmp_path):
+    write_jobs(tmp_path, [job()])
+    (tmp_path / "profile.yaml").write_text("search:\n  title_keywords:\n    - Staff\n")
+    assert run(tmp_path, "backup") == 0
+    assert (tmp_path / "backups" / f"profile.backup-{TODAY}.yaml").is_file()
+
+
+def test_files_saved_with_a_byte_order_mark_still_read(tmp_path):
+    profile_yaml = load("profile_yaml")
+    write_jobs(tmp_path, [job()])
+    tracker_file = tmp_path / "jobs.json"
+    tracker_file.write_text("﻿" + tracker_file.read_text(encoding="utf-8"), encoding="utf-8")
+    profile = tmp_path / "profile.yaml"
+    profile.write_text("﻿search:\n  title_keywords:\n    - Staff\n", encoding="utf-8")
+    assert run(tmp_path, "validate") == 0
+    assert profile_yaml.load(profile)["search"]["title_keywords"] == ["Staff"]

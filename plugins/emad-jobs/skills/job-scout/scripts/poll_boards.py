@@ -31,7 +31,7 @@ import urllib.request
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
-from jobfiles import FolderError, job_folder, os_problem, read_json, resolve_in, write_json
+from jobfiles import FolderError, job_folder, os_problem, read_json, resolve_in, words, write_json
 from profile_yaml import ProfileError, get, load
 
 ENDPOINTS = {
@@ -136,7 +136,7 @@ def normalize_ashby(token: str, company: str, payload: dict) -> list[dict]:
                 or comp.get("scrapeableCompensationSalarySummary"),
                 employment_type=j.get("employmentType"),
                 workplace=j.get("workplaceType"),
-                description=strip_html(j.get("descriptionPlain") or j.get("descriptionHtml")),
+                description=j.get("descriptionPlain") or j.get("descriptionHtml"),
             )
         )
     return out
@@ -156,7 +156,7 @@ def normalize_greenhouse(token: str, company: str, payload: dict) -> list[dict]:
                 j.get("absolute_url"),
                 remote=_is_remote(location),
                 published=_day(j.get("first_published") or j.get("updated_at")),
-                description=strip_html(j.get("content")),
+                description=j.get("content"),
             )
         )
     return out
@@ -185,7 +185,7 @@ def normalize_lever(token: str, company: str, payload: list) -> list[dict]:
                 compensation=comp,
                 employment_type=cats.get("commitment"),
                 workplace=j.get("workplaceType"),
-                description=strip_html(j.get("descriptionPlain") or j.get("description")),
+                description=j.get("descriptionPlain") or j.get("description"),
             )
         )
     return out
@@ -203,7 +203,7 @@ def normalize_arbeitnow(payload: dict) -> list[dict]:
             remote=bool(j.get("remote")),
             published=_day(j.get("created_at")),
             employment_type=", ".join(j.get("job_types") or []) or None,
-            description=strip_html(j.get("description")),
+            description=j.get("description"),
             lead=True,
         )
         for j in payload.get("data", [])
@@ -228,7 +228,7 @@ def normalize_jobicy(payload: dict) -> list[dict]:
                 published=_day(j.get("pubDate")),
                 compensation=comp.strip() if comp else None,
                 employment_type=", ".join(j.get("jobType") or []) or None,
-                description=strip_html(j.get("jobDescription") or j.get("jobExcerpt")),
+                description=j.get("jobDescription") or j.get("jobExcerpt"),
                 lead=True,
             )
         )
@@ -246,9 +246,8 @@ NORMALIZERS = {
 
 
 def _words(text: str | None) -> str:
-    text = re.sub(r"[^\w]+", " ", (text or "").lower())
-    text = re.sub(r"\b(sr|snr)\b", "senior", text)
-    return f" {' '.join(text.split())} "
+    """words() with a space at each end, so a phrase matches whole words only."""
+    return f" {words(text)} "
 
 
 def _has(text_words: str, phrase: str) -> bool:
@@ -346,6 +345,10 @@ def poll(config: dict, rules: Rules, fetch, workers: int = 8, timeout: float = 2
         except (AttributeError, KeyError, TypeError, ValueError) as exc:
             return key, {"status": "error", "error": f"unexpected response: {exc}"}, []
         kept = [p for p in postings if keep(p, rules)]
+        # Descriptions are cleaned only now: most postings fail the prefilter, and cleaning
+        # HTML is the slow part of normalizing.
+        for p in kept:
+            p["description"] = strip_html(p.get("description"))
         return key, {"status": "ok", "jobs": len(postings), "kept": len(kept)}, kept
 
     boards, candidates = {}, []
@@ -402,6 +405,14 @@ def main(argv: list[str] | None = None) -> int:
         print("dead: " + ", ".join(by_status["dead"]))
     if by_status["error"]:
         print("errors: " + ", ".join(by_status["error"]))
+    if not by_status["ok"]:
+        # Never let "no new roles" follow a run that read nothing.
+        print(
+            "error: no board could be read, so this run found nothing. Run check_folder.py "
+            "--network to see which hosts are blocked (references/environments.md)",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 

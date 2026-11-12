@@ -49,6 +49,7 @@ from tailor_resume import (
     check_pdf,
     expected_pages,
     need_docx,
+    page_target,
     para_text,
     paragraphs,
     render_pdf,
@@ -179,9 +180,15 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     base_texts = [para_text(x) for x in paragraphs(document(str(base)))]
-    pages = None if args.no_pdf else expected_pages(base, get(profile, "resume.page_count"))
     archive_dir = root / "resumes" / "_archive"
     failures, archived, resynced, frozen, clean = [], [], [], [], 0
+    pages = None
+    if not args.no_pdf:
+        try:
+            pages = expected_pages(base, page_target(root, None))
+        except TailorError as exc:
+            # Archiving and resyncing do not need the page count, so they still run.
+            failures.append(f"PAGE COUNT NOT CHECKED  {exc}")
     tracker_changed = False
 
     for job in data["jobs"]:

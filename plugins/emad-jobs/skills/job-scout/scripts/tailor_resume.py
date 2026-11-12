@@ -58,6 +58,7 @@ W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 XML_SPACE = "{http://www.w3.org/XML/1998/namespace}space"
 NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)*")
 MAC_SOFFICE = "/Applications/LibreOffice.app/Contents/MacOS/soffice"
+SOFFICE_TIMEOUT = 300  # seconds for one LibreOffice conversion
 
 
 class TailorError(ValueError):
@@ -354,15 +355,23 @@ def pdf_text(path: Path) -> str | None:
     return r.stdout.decode("utf-8", "ignore") if r.returncode == 0 else ""
 
 
-def find_soffice() -> str | None:
-    found = shutil.which("soffice") or shutil.which("libreoffice")
-    if found:
-        return found
-    return MAC_SOFFICE if Path(MAC_SOFFICE).exists() else None
+def find_soffice(which=shutil.which) -> str | None:
+    """The LibreOffice command, or None. check_folder.py passes its own which() in tests."""
+    return which("soffice") or which("libreoffice") or which(MAC_SOFFICE)
 
 
 def run_soffice(soffice: str, docx_path: Path, outdir: Path) -> None:
     profile = Path(outdir) / "lo-profile"
+    try:
+        _convert(soffice, profile, docx_path, outdir)
+    except subprocess.TimeoutExpired:
+        raise TailorError(
+            f"PDF FAILED: LibreOffice did not finish in {SOFFICE_TIMEOUT} seconds for "
+            f"{docx_path.name}. Close any open LibreOffice window and try again, or use --no-pdf"
+        ) from None
+
+
+def _convert(soffice: str, profile: Path, docx_path: Path, outdir: Path) -> None:
     subprocess.run(
         [
             soffice,
@@ -376,7 +385,7 @@ def run_soffice(soffice: str, docx_path: Path, outdir: Path) -> None:
         ],
         capture_output=True,
         text=True,
-        timeout=300,
+        timeout=SOFFICE_TIMEOUT,
     )
 
 
@@ -462,6 +471,14 @@ def expected_pages(base: Path, pages: int | None) -> int | None:
         except FolderError:
             pass  # Only a cache: the next call renders the base again.
     return count
+
+
+def changed_lines(edits: list) -> list[str]:
+    """The new text of each edited line, which the rendered PDF must contain."""
+    return [
+        e.get("text", "") if e.get("kind") == "plain" else e.get("label", "") + e.get("body", "")
+        for e in edits
+    ]
 
 
 def check_pdf(pdf: Path, must_contain: list[str], pages: int | None) -> list[str]:
@@ -588,8 +605,9 @@ def main(argv: list[str] | None = None) -> int:
         if pdf is None:
             print("PDF skipped: LibreOffice (soffice) is not installed. The .docx is ready.")
             return 0
-        changed = [e.get("text") or e["label"] + e["body"] for e in edits]
-        problems = check_pdf(pdf, changed, expected_pages(base, page_target(root, args.pages)))
+        problems = check_pdf(
+            pdf, changed_lines(edits), expected_pages(base, page_target(root, args.pages))
+        )
         for problem in problems:
             print(problem)
         print(f"pdf -> {pdf.relative_to(root)}" if not problems else "PDF has problems; see above")

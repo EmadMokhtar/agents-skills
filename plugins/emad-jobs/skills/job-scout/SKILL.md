@@ -56,7 +56,7 @@ The files must still be there at the next run. Before the first command of a ses
 | `kanban.html` | person | The board. Copy of `assets/kanban.html`; it opens `jobs.json` in Chrome or Edge. |
 | `resumes/` | agent | Tailored resumes; `resumes/_archive/` for dead roles. |
 | `outreach/` | agent | Contact search reports and draft notes, for the person to send. |
-| `backups/` | scripts | Dated copies of the tracker, log and config. |
+| `backups/` | scripts | Dated copies of the tracker, log, config and profile. |
 | `candidates.json`, `dedup.json` | scripts | Scratch files of the current run. |
 
 To set up a new folder, run `check_folder.py --dir <folder> --init`. It copies the
@@ -108,7 +108,9 @@ why (see [references/sources.md](references/sources.md)) and say so.
    `tracker.py backup`, then `tracker.py validate`. Fix or report any problem before going on.
 2. **Poll the boards.** Run `poll_boards.py`. It polls every registry token and the enabled
    aggregators, applies the loose title and location prefilter, and writes
-   `candidates.json`. Note the dead boards it prints. For `search.priority_companies`
+   `candidates.json`. Note the dead boards it prints. If it exits with "no board could be
+   read", nothing was searched: follow
+   [references/environments.md](references/environments.md), and never report "no new roles". For `search.priority_companies`
    without a token, find the token now ([references/sources.md](references/sources.md)).
    Web search is an optional fallback for breadth.
 3. **Dedup.** Run `tracker.py dedup`. Work from `dedup.json`: `new` are new, `relisted` are

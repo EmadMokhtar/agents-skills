@@ -78,7 +78,7 @@ Everything lives in the folder you choose:
 | `search-config.json` | The list of company job boards to check. |
 | `resumes/` | Tailored resumes; `resumes/_archive/` for roles that are over. |
 | `outreach/` | Contact search reports and draft notes. You send them; the agent never does. |
-| `backups/` | Dated copies of the tracker and the log, made before every change. |
+| `backups/` | Dated copies of the tracker, the log, the board list and your profile, made before every change. |
 
 ## Safety promises
 

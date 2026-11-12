@@ -138,7 +138,7 @@ they are short. They show the run did its work, and they are how a miss is found
 
 ## Backups
 
-`tracker.py backup` copies `jobs.json`, `job-search.md` and `search-config.json` into
+`tracker.py backup` copies `jobs.json`, `job-search.md`, `search-config.json` and `profile.yaml` into
 `backups/` as `<name>.backup-<date>`, at the start of every run. Every write command also
 backs up first, once per day. A second backup on the same day gets a `-2`, `-3` suffix.
 Backups are never overwritten or deleted by the skill.

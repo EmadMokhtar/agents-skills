@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 from jobfiles import FolderError, job_folder, os_problem
 from poll_boards import _jobs, fetch_json
 from profile_yaml import ProfileError, get, load
-from tailor_resume import MAC_SOFFICE
+from tailor_resume import find_soffice
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 # What --init copies: (template in assets/, name in the folder).
@@ -166,7 +166,7 @@ def check_tools(which=shutil.which, has_module=None) -> list[Check]:
     else:
         note = "needed for resume tailoring: python3 -m pip install python-docx"
         lines.append(Check("MISSING", "python-docx", note))
-    if which("soffice") or which("libreoffice") or which(MAC_SOFFICE):
+    if find_soffice(which):
         lines.append(Check("OK", "LibreOffice"))
     else:
         note = "optional: without it, tailored resumes have no PDF"

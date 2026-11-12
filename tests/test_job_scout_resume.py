@@ -491,3 +491,37 @@ def test_the_base_page_count_is_rendered_once_and_cached(tmp_path, monkeypatch):
     make_resume(base, date="Mar 2020")  # a changed base is rendered again
     assert tailor.expected_pages(base, None) == 2
     assert len(renders) == 2
+
+
+# --- smaller review fixes ---------------------------------------------------------------------
+
+
+def test_the_pdf_check_handles_an_edit_that_empties_a_line():
+    edits = [
+        {"match": "x", "kind": "plain", "text": ""},
+        {"match": "y", "kind": "lb", "label": "Languages: ", "body": "Go"},
+    ]
+    assert tailor.changed_lines(edits) == ["", "Languages: Go"]
+
+
+def test_a_libreoffice_timeout_is_a_clear_error(tmp_path, monkeypatch):
+    def slow(*args, **kwargs):
+        raise tailor.subprocess.TimeoutExpired(cmd="soffice", timeout=300)
+
+    monkeypatch.setattr(tailor.subprocess, "run", slow)
+    with pytest.raises(tailor.TailorError, match="did not finish"):
+        tailor.run_soffice("soffice", tmp_path / "a.docx", tmp_path)
+
+
+def test_housekeeping_goes_on_when_the_base_cannot_be_rendered(tmp_path, monkeypatch, capsys):
+    folder = housekeeping_folder(tmp_path, {"live": "new"})
+
+    def stuck(base, pages):
+        raise tailor.TailorError("LibreOffice did not finish in 300 seconds")
+
+    monkeypatch.setattr(sync, "expected_pages", stuck)
+    monkeypatch.setattr(sync, "render_pdf", lambda path: None)
+    assert sync.main(["--dir", str(folder), "--apply"]) == 1
+    out = capsys.readouterr().out
+    assert "did not finish" in out
+    assert "Feb 2020" in texts(folder / "resumes" / "live.docx")[4]

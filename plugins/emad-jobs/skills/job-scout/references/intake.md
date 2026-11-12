@@ -134,7 +134,8 @@ The board poller keeps a posting only when its title contains one of
 
 ## Changing the profile later
 
-When the person changes a criterion ("I am open to Berlin now"), edit `profile.yaml`, set
+When the person changes a criterion ("I am open to Berlin now"), run `tracker.py backup`, then
+edit `profile.yaml`, set
 `updated`, and show the changed lines. Never keep a criterion anywhere else: not in a
 scheduled prompt, not in `search-config.json`, not in a note. If an old note disagrees with
 the profile, the profile wins, and say so.
