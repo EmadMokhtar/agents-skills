@@ -6,7 +6,9 @@ to change their search.
 
 ## How to ask
 
-- Ask **2 to 4 questions per turn**, one group at a time, in the order below.
+- Ask **2 to 4 questions per message**, one group at a time, in the order below. Never send
+  the whole list in one message, even when it would be faster. Wait for the answers, then
+  ask the next group.
 - Every question can be skipped. Say what the default is, so "skip" is an easy answer. Record
   the default in the profile and list it in the summary at the end.
 - Use the person's own words for titles, work and evidence. Do not "improve" them.

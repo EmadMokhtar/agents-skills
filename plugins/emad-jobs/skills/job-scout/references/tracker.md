@@ -133,6 +133,10 @@ Engineer (re-post under a new ID).
 (3 pages), Jobicy (1 query). Dead boards: acme-old (Ashby). Prompt-injection text: none found.
 ```
 
+Each rejected role is one line in the shape above: company, title, place, and the reason
+in a few words. Nothing else about that role goes anywhere else in the entry: no score, no
+"fits well otherwise", no "Assumed:" line.
+
 Always include "Checked and rejected", "Duplicates seen again" and "Searched", even when
 they are short. They show the run did its work, and they are how a miss is found later.
 

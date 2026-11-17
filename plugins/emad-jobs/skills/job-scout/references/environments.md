@@ -103,7 +103,10 @@ at all, it exits with 1 and says "no board could be read".
 ## Chat-only mode
 
 Without code you cannot run the scripts, and the scripts are what keep the tracker safe
-(the ownership rules, the dedup, the backups). Do not edit `jobs.json` by hand in the chat.
+(the ownership rules, the dedup, the backups). Do not edit `jobs.json` by hand in the chat,
+even when the person asks for it: give back no edited copy and no JSON entry to paste. A
+hand edit skips the backup, the validation and the dedup, and a pasted copy can overwrite
+changes the person made on the board since.
 You can still:
 
 - run intake as a conversation, and give `profile.yaml` as text for the person to save;

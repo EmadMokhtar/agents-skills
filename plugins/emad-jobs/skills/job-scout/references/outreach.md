@@ -20,7 +20,7 @@ write "contact search skipped: hiring-contact-finder is not installed" in the re
 
 | Value | Interactive run | Unattended run |
 | --- | --- | --- |
-| `ask` (default) | End the report by offering it for the reported roles, by name. Run it only for the roles the person picks. | Do not search. Add one line: "Contact search: available for <roles>. Ask me to run it." |
+| `ask` (default) | End the report by offering it for the reported roles, by name. Name the `hiring-contact-finder` skill and say that it searches public, professional sources. Run it only for the roles the person picks. | Do not search. Add one line: "Contact search: available for <roles>. Ask me to run it." |
 | `auto` | Run it for the reported roles, highest score first, at most `outreach.max_per_run` (default 3). | The same. |
 | `never` | Only when the person asks. | Never. |
 

@@ -20,8 +20,10 @@ profile and say so in the log.
   `check_folder.py --dir <folder> --network`. If the folder cannot be used, stop and
   notify: "The job search could not run: <the FAIL line>."
 - **Ask no questions.** When something is unclear, choose the safe option, state the
-  assumption in the log ("Assumed: the Berlin office role needs relocation, so it was not
-  added"), and continue.
+  assumption in the log ("Assumed: the Acme posting does not say which countries its
+  remote work covers, so it was not added"), and continue. Write "Assumed:" only for a real
+  guess. A rule the profile states clearly, such as `location.relocation: false`, is not an
+  assumption: the role goes under "Checked and rejected" with its one-line reason.
 - **No profile.yaml?** Do not search. Stop, and notify: "job-scout needs a profile first.
   Run intake in `<folder>`."
 - Do every step of the run workflow, including housekeeping. Write the log entry even when
@@ -31,7 +33,10 @@ profile and say so in the log.
   `outreach.max_per_run` roles ([outreach.md](outreach.md)).
 - **Never** apply, sign in, accept terms, or send a message. Prepare; the person acts.
 - If a step fails (no network, a script error, an unreadable tracker), stop writing, keep
-  the backups, and report the failure.
+  the backups, and report the failure. Do not repair `jobs.json` by hand. The notification
+  says what failed and that the boards were not searched. Never write "no new roles" in
+  it, not even as "so there are no new roles to report": nothing was searched, so that is
+  not known.
 
 ## Notifications
 

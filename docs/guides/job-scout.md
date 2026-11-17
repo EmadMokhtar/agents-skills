@@ -184,7 +184,7 @@ A chat app such as Claude.ai or ChatGPT gives the agent a *sandbox*: a temporary
 - If your `jobs.json` looks older than your log, the agent asks before it searches.
 - The board still runs on your computer. Open `kanban.html` from your own folder, and choose your own `jobs.json`. Upload that copy next time.
 - Scheduled runs do not work in a chat app.
-- If your chat cannot run code at all, it is *chat-only mode*. The agent can ask the intake questions, check one job link and write draft notes. It cannot search or keep a tracker.
+- If your chat cannot run code at all, it is *chat-only mode*. The agent can ask the intake questions, check one job link and write draft notes. It cannot search or keep a tracker. It also will not edit a pasted `jobs.json` for you to copy back, because without the scripts there is no backup and no check.
 
 ## Scheduled runs
 
