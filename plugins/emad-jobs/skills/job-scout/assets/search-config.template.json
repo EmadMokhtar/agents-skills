@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "purpose": "The board registry for job-scout. Poll every token in boards on every run. Never guess a token from a company name: find it on the company's careers page and add it here.",
+  "standing_process": [
+    "Load this file first on every run, and poll every token in boards.",
+    "When a new company enters jobs.json, find its board token and add it here in the same run.",
+    "When the user pastes a role the run did not report: verify it live, find why it was missed (board not polled, title keyword, location keyword, or correctly rejected), fix this file or the profile, and tell the user the reason."
+  ],
+  "boards": {
+    "ashby": [],
+    "greenhouse": [],
+    "lever": []
+  },
+  "board_entry_example": {
+    "token": "acme",
+    "company": "Acme",
+    "added": "2026-01-15",
+    "note": "Found on acme.example/careers. Tokens can be case-sensitive."
+  },
+  "starter_boards_note": "Optional public boards of AI-native companies. Tokens change: a 404 means the token must be found again. Copy only the ones the user wants into boards.",
+  "starter_boards": {
+    "ashby": [
+      {
+        "token": "cohere",
+        "company": "Cohere"
+      },
+      {
+        "token": "elevenlabs",
+        "company": "ElevenLabs"
+      },
+      {
+        "token": "langchain",
+        "company": "LangChain"
+      },
+      {
+        "token": "langfuse",
+        "company": "Langfuse"
+      },
+      {
+        "token": "lovable",
+        "company": "Lovable"
+      },
+      {
+        "token": "mistral.ai",
+        "company": "Mistral AI"
+      },
+      {
+        "token": "n8n",
+        "company": "n8n"
+      },
+      {
+        "token": "qdrant.tech",
+        "company": "Qdrant"
+      },
+      {
+        "token": "replit",
+        "company": "Replit"
+      },
+      {
+        "token": "synthesia",
+        "company": "Synthesia"
+      },
+      {
+        "token": "cursor",
+        "company": "Cursor"
+      },
+      {
+        "token": "sierra",
+        "company": "Sierra"
+      },
+      {
+        "token": "decagon",
+        "company": "Decagon"
+      },
+      {
+        "token": "harvey",
+        "company": "Harvey"
+      },
+      {
+        "token": "cognition",
+        "company": "Cognition"
+      },
+      {
+        "token": "baseten",
+        "company": "Baseten"
+      },
+      {
+        "token": "modal",
+        "company": "Modal"
+      },
+      {
+        "token": "deepl",
+        "company": "DeepL"
+      },
+      {
+        "token": "writer",
+        "company": "Writer"
+      },
+      {
+        "token": "perplexity",
+        "company": "Perplexity"
+      },
+      {
+        "token": "pinecone",
+        "company": "Pinecone"
+      },
+      {
+        "token": "weaviate",
+        "company": "Weaviate"
+      },
+      {
+        "token": "deepgram",
+        "company": "Deepgram"
+      },
+      {
+        "token": "runway",
+        "company": "Runway"
+      }
+    ],
+    "greenhouse": [
+      {
+        "token": "anthropic",
+        "company": "Anthropic"
+      },
+      {
+        "token": "databricks",
+        "company": "Databricks"
+      },
+      {
+        "token": "scaleai",
+        "company": "Scale AI"
+      },
+      {
+        "token": "togetherai",
+        "company": "Together AI"
+      },
+      {
+        "token": "assemblyai",
+        "company": "AssemblyAI"
+      }
+    ]
+  },
+  "aggregators": {
+    "arbeitnow": {
+      "enabled": true,
+      "pages": 3,
+      "note": "Leads only. Paginated with ?page=N. Good EU coverage."
+    },
+    "jobicy": {
+      "enabled": true,
+      "queries": [
+        "count=50&industry=engineering"
+      ],
+      "note": "Leads only. Remote roles; read jobGeo for the region."
+    }
+  },
+  "unresolved": [],
+  "unresolved_example": {
+    "company": "Globex",
+    "careers_url": "https://globex.example/careers",
+    "note": "Custom careers site, no ATS token. Open by hand."
+  },
+  "filter_refinements": [],
+  "filter_refinement_example": {
+    "date": "2026-01-15",
+    "lesson": "A 'Tech Lead' title was dropped by the title keywords.",
+    "fix": "Added 'Tech Lead' to search.title_keywords in profile.yaml."
+  },
+  "miss_log": [],
+  "miss_log_example": {
+    "date": "2026-01-15",
+    "company": "Acme",
+    "role": "Staff Engineer",
+    "root_cause": [
+      "board not in the registry"
+    ],
+    "would_it_have_been_reported": "Yes, score 8.",
+    "fix_applied": "Added the Ashby token acme."
+  },
+  "channel_platforms": [
+    {
+      "name": "Hacker News 'Who is hiring'",
+      "url": "https://news.ycombinator.com/submitted?id=whoishiring",
+      "channel": "hiring-manager-direct",
+      "note": "Monthly thread. Posts are often written by the hiring engineer or founder."
+    },
+    {
+      "name": "Work at a Startup",
+      "url": "https://www.workatastartup.com/",
+      "channel": "hiring-manager-direct",
+      "note": "Y Combinator companies; messages go to founders. Use in the browser."
+    },
+    {
+      "name": "Wellfound",
+      "url": "https://wellfound.com/jobs",
+      "channel": "hiring-manager-direct",
+      "note": "Startup roles, often reviewed by founders. Use in the browser."
+    },
+    {
+      "name": "Reverse-recruiting platforms",
+      "url": "",
+      "channel": "recruiter-inbound",
+      "note": "Companies apply to the candidate with salary and stack stated. A human is attached from the start."
+    }
+  ]
+}

@@ -26,7 +26,7 @@
     {
       "name": "emad-jobs",
       "source": "./plugins/emad-jobs",
-      "description": "Job search skills: find the people behind a role and reach them professionally.",
+      "description": "Job search skills: find and track roles that fit, tailor your resume honestly, and reach the people behind a role.",
       "author": {
         "name": "Emad Mokhtar",
         "url": "https://github.com/EmadMokhtar"
@@ -37,6 +37,8 @@
       "keywords": [
         "jobs",
         "job-search",
+        "job-tracker",
+        "resume",
         "outreach"
       ]
     }

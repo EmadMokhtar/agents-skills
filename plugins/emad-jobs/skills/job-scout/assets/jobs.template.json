@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "version": 1,
+    "statuses": ["new", "applied", "in_process", "rejected", "archived"],
+    "last_updated": null,
+    "owners": {
+      "agent": "Adds roles as 'new', archives 'new' roles (with a reason), revives roles it archived as expired, and writes 'notes'.",
+      "user": "Sets applied, in_process and rejected, archives anything, and owns 'my_notes', 'hiring_manager', 'channel' and 'human_contact_by'. The agent never changes these on its own; it records only what the user tells it."
+    },
+    "human_contact_rule": "true once a role reached in_process; otherwise the user's own answer when human_contact_by is 'user'; otherwise false when it was rejected, and null for anything else."
+  },
+  "jobs": []
+}

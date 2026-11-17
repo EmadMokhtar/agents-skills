@@ -80,6 +80,8 @@ nav:
   - Install: install.md
   # The trailing slash hands this section to skills/SUMMARY.md.
   - Skills: skills/
+  - Guides:
+      - job-scout user manual: guides/job-scout.md
   - Contributing: contributing.md
   - Decisions:
       - Overview: adr/README.md
