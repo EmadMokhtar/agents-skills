@@ -14,3 +14,4 @@ To add one, copy `template.md`, take the next number, and add it to the nav in `
 | 0001 | [One plugin per category](0001-one-plugin-per-category.md) | 2026-10-05 |
 | 0002 | [Agent Plugins with generated catalogs](0002-agent-plugins-standard-with-generated-catalogs.md) | 2026-10-05 |
 | 0003 | [release-please per plugin](0003-release-please-per-plugin.md) | 2026-10-05 |
+| 0004 | [A Claude manifest in every plugin](0004-generate-a-claude-manifest-in-every-plugin.md) | 2026-11-18 |

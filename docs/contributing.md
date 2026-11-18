@@ -58,13 +58,15 @@ just new-plugin emad-jobs "Job search skills: cover letters, outreach, and more.
 ```
 
 This writes `plugins/emad-jobs/plugin.json` at version `0.0.0` ("not released yet"). It also
-registers the plugin with release-please and regenerates both catalogs. Then:
+registers the plugin with release-please, regenerates both catalogs, and writes the copy at
+`plugins/emad-jobs/.claude-plugin/plugin.json` that the Claude app needs. Then:
 
 1. Add the plugin to the table in `README.md`.
 2. Add its first skill with `just new-skill`. A plugin without skills fails `just layout`.
 
-Never edit `.claude-plugin/marketplace.json` or `.agents/plugins/marketplace.json` by hand.
-Change `plugin.json` and run `just sync`.
+Never edit `.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, or a
+plugin's `.claude-plugin/plugin.json` by hand. Change the plugin's root `plugin.json` and run
+`just sync`.
 
 ## Evals
 
@@ -85,12 +87,19 @@ Three details are easy to get wrong:
   tool. Claude Code can still run a skill's scripts with its Bash tool. If a case must not
   depend on scripts, say so in the task, and give the facts the scripts would report.
 
-Run them for real through your installed Claude Code. This uses your Claude quota but needs
-no API key:
+Run them for real through your installed Claude Code. This uses your Claude quota. skill-lens
+runs Claude Code with a temporary home folder, so Claude Code cannot see your normal login.
+Create a token once with `claude setup-token`. Then paste it into a hidden prompt, and pass
+it to the eval command only, so it stays out of your shell history:
 
 ```bash
-just eval emad-coding/conventional-commits
+read -rs CLAUDE_CODE_OAUTH_TOKEN
+CLAUDE_CODE_OAUTH_TOKEN="$CLAUDE_CODE_OAUTH_TOKEN" just eval emad-coding/conventional-commits
 ```
+
+Without the token, the run stops before the first case with exit code 2. Do not turn the
+sandbox off to avoid the token: the eval runner starts Claude Code with
+`--dangerously-skip-permissions`.
 
 In CI, real evals run only when started by hand (**Actions → Evals → Run workflow**), or
 when you add the `run-evals` label to a pull request. Then only the skills that the pull

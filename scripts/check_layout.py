@@ -23,7 +23,7 @@ from repo_model import (
     RELEASE_MANIFEST,
     REPO_ROOT,
     SCHEMA_PATH,
-    VERSION_UPDATER,
+    VERSION_UPDATERS,
     RepoError,
     plugin_dirs,
     read_manifest,
@@ -67,10 +67,11 @@ def check_release_config(root: Path) -> list[str]:
         else:
             if package.get("component") != plugin_dir.name:
                 problems.append(f"{RELEASE_CONFIG}: {key} must have component {plugin_dir.name!r}")
-            if VERSION_UPDATER not in package.get("extra-files", []):
-                problems.append(
-                    f"{RELEASE_CONFIG}: {key} must update plugin.json with {VERSION_UPDATER}"
-                )
+            for updater in VERSION_UPDATERS:
+                if updater not in package.get("extra-files", []):
+                    problems.append(
+                        f"{RELEASE_CONFIG}: {key} must update {updater['path']} with {updater}"
+                    )
         if key not in versions:
             problems.append(f"{RELEASE_MANIFEST}: {key} has no version")
             continue

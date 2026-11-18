@@ -33,12 +33,17 @@ def test_create_plugin_writes_a_valid_manifest_and_registers_it(repo):
     config = json.loads((repo.root / "release-please-config.json").read_text())
     assert config["packages"]["plugins/emad-coding"] == {
         "component": "emad-coding",
-        "extra-files": [{"type": "json", "path": "plugin.json", "jsonpath": "$.version"}],
+        "extra-files": [
+            {"type": "json", "path": "plugin.json", "jsonpath": "$.version"},
+            {"type": "json", "path": ".claude-plugin/plugin.json", "jsonpath": "$.version"},
+        ],
     }
     versions = json.loads((repo.root / ".release-please-manifest.json").read_text())
     assert versions == {"plugins/emad-coding": "0.0.0"}
     claude = json.loads((repo.root / ".claude-plugin/marketplace.json").read_text())
     assert [p["name"] for p in claude["plugins"]] == ["emad-coding"]
+    copy = json.loads((plugin_dir / ".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+    assert copy == {k: v for k, v in manifest.items() if k != "$schema"}
 
 
 @pytest.mark.parametrize(

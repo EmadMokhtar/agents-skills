@@ -1,14 +1,17 @@
-"""Write the two catalog files from the plugin.json files.
+"""Write the two catalog files and the Claude manifests from the plugin.json files.
 
-Run: just sync          write the catalogs
+Run: just sync          write the generated files
      just catalogs      only check them (CI does this)
 
-Each plugin.json is the single source of truth. The catalogs are generated,
+Each plugin.json is the single source of truth. These files are generated,
 so never edit them by hand:
 - .claude-plugin/marketplace.json is read by Claude Code, GitHub Copilot,
   VS Code and `npx skills`;
-- .agents/plugins/marketplace.json is the path the Codex docs name.
+- .agents/plugins/marketplace.json is the path the Codex docs name;
+- plugins/<plugin>/.claude-plugin/plugin.json is the manifest the Claude app
+  (claude.ai, Claude Desktop, Cowork) requires. Claude Code reads it too.
 Catalogs never carry a version, so they cannot disagree with plugin.json.
+The Claude manifest does carry the version. release-please bumps both files.
 """
 
 from __future__ import annotations
@@ -19,6 +22,7 @@ import sys
 from pathlib import Path
 
 from repo_model import (
+    CLAUDE_MANIFEST,
     MARKETPLACE_NAME,
     OWNER,
     REPO_ROOT,
@@ -50,6 +54,15 @@ def claude_catalog(plugins: list[Plugin]) -> dict:
     }
 
 
+def claude_manifest(plugin: Plugin) -> dict:
+    """The copy of plugin.json that Claude reads.
+
+    It drops "$schema": that URL names the Agent Plugins schema, which is not
+    the schema of Claude's manifest. Every other field keeps its order.
+    """
+    return {k: v for k, v in plugin.manifest.items() if k != "$schema"}
+
+
 def codex_category(plugin_name: str) -> str:
     return plugin_name.removeprefix("emad-").replace("-", " ").title()
 
@@ -76,6 +89,7 @@ def expected_catalogs(root: Path) -> dict[Path, str]:
     return {
         root / CLAUDE_CATALOG: render_json(claude_catalog(plugins)),
         root / CODEX_CATALOG: render_json(codex_catalog(plugins)),
+        **{p.path / CLAUDE_MANIFEST: render_json(claude_manifest(p)) for p in plugins},
     }
 
 
@@ -99,7 +113,7 @@ def write_catalogs(root: Path) -> list[Path]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--check", action="store_true", help="only report stale catalogs")
+    parser.add_argument("--check", action="store_true", help="only report stale generated files")
     parser.add_argument("--root", type=Path, default=REPO_ROOT, help=argparse.SUPPRESS)
     args = parser.parse_args(argv)
     root = args.root
@@ -120,7 +134,7 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
     if stale:
-        print("The catalogs are out of date. Run: just sync", file=sys.stderr)
+        print("The generated files are out of date. Run: just sync", file=sys.stderr)
         return 1
     print("catalogs: ok")
     return 0
