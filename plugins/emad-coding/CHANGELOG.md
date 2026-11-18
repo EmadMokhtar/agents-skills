@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/EmadMokhtar/agents-skills/compare/emad-coding-v0.2.0...emad-coding-v0.2.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* **skills:** correct the rules and eval cases behind 11 eval failures ([#17](https://github.com/EmadMokhtar/agents-skills/issues/17)) ([1888486](https://github.com/EmadMokhtar/agents-skills/commit/1888486919a4804bc84912def06ce8afb4b4d7a9))
+
 ## [0.2.0](https://github.com/EmadMokhtar/agents-skills/compare/emad-coding-v0.1.0...emad-coding-v0.2.0) (2026-10-13)
 
 
