@@ -23,7 +23,9 @@ choose what to lead with. You may not add:
 When the posting asks for something the resume does not show, **do not add it**. Tell the
 person: "The role asks for Kubernetes. Your resume does not mention it. If you have used it,
 tell me how, and add it to your base resume first; I will not add it on my own." Put the gap
-in the role's watch-outs.
+in the role's watch-outs. Do not show an example line that contains the missing skill, such
+as "Kubernetes (2 years at X)": its years and employer are invented, and the person may copy
+it. Wait for their real facts.
 
 `tailor_resume.py` also refuses any number that does not appear in the base resume. Do not
 work around it: ask the person.

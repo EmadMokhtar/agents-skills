@@ -75,4 +75,6 @@ message.
 
 If the candidate's background is missing, use clear placeholders in square
 brackets. Examples: `[your strongest result in distributed systems]`,
-`[link to your GitHub]`. Do not fill them with invented details.
+`[link to your GitHub]`. Do not fill them with invented details. Put the whole claim inside
+the brackets: write `[your experience with Kafka, if you have it]`, not "I've also worked
+with Kafka on [an example]", because the words outside the brackets already claim the skill.
