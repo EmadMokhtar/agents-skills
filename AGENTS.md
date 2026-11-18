@@ -12,7 +12,8 @@ This repository holds Emad Mokhtar's agent skills, packaged as Agent Plugins 1.0
   never deeper.
 - Skill names are unique across all plugins.
 - `plugin.json` has no `extensions` and no `author.email`. `version` lives only in
-  `plugin.json` and `.release-please-manifest.json`.
+  `plugin.json`, its generated `.claude-plugin/plugin.json` copy, and
+  `.release-please-manifest.json`. release-please bumps all three.
 - Never edit `.claude-plugin/marketplace.json` or `.agents/plugins/marketplace.json` by hand.
   Run `just sync`.
 - Create plugins and skills with `just new-plugin` and `just new-skill`, never by hand.

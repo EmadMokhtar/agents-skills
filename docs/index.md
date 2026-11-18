@@ -19,7 +19,9 @@ that reads `SKILL.md`, through [`npx skills`](https://github.com/vercel-labs/ski
 ```text
 plugins/
   emad-<category>/
-    plugin.json          the plugin manifest
+    plugin.json          the plugin manifest (edit this one)
+    .claude-plugin/
+      plugin.json        a copy for the Claude app, written by `just sync`
     skills/
       <skill>/
         SKILL.md         what the agent reads
