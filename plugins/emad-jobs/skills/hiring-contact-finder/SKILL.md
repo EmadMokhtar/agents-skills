@@ -222,7 +222,10 @@ can send a write-up" or "happy to share more": an offer is not a request, and ne
 to one it reads as a second ask.
 
 If the candidate's background is missing (see Inputs), write the draft with clear
-placeholders such as `[one concrete result from your work that matches X]`.
+placeholders such as `[one concrete result from your work that matches X]`. Put the whole
+claim inside the brackets. Text outside the brackets must not say that the candidate has a
+skill or did a job: "I've also worked with Kafka on [an example]" claims Kafka experience
+they never stated. Write `[your experience with Kafka, if you have it]` instead.
 
 The draft never claims anything about the candidate that they did not say, such as
 where they live, their right to work, or when they can start. Use a placeholder
