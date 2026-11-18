@@ -75,6 +75,18 @@ Eval cases are YAML files in a skill's `evals/` folder, in the
 `task` and `assertions`. The assertion kinds are `contains`, `not_contains`, `regex`,
 `equals`, `file-produced` and `json-schema`.
 
+Three details are easy to get wrong:
+
+- The judge fails a rubric line when the line is ambiguous about the reply. Write each line
+  so it says what counts and what does not, for example "offering to draft a note for the
+  user to send is fine". Every case must pass, so a vague line makes an eval run fail from
+  time to time.
+- `equals` strips spaces and line breaks from both ends of the output or file before it
+  compares. Write the expected value without a final `\n`, or the check never holds.
+- `allow_scripts = false` in `skill-lens.toml` only turns off skill-lens's own `run_script`
+  tool. Claude Code can still run a skill's scripts with its Bash tool. If a case must not
+  depend on scripts, say so in the task, and give the facts the scripts would report.
+
 Run them for real through your installed Claude Code. This uses your Claude quota. skill-lens
 runs Claude Code with a temporary home folder, so Claude Code cannot see your normal login.
 Create a token once with `claude setup-token`. Then paste it into a hidden prompt, and pass

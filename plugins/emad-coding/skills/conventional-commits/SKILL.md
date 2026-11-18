@@ -56,6 +56,19 @@ A pull request title follows the same format as a commit subject. When a pull re
 squash-merged, its title becomes the commit on the main branch, and release tools read that
 commit to choose the next version. A title such as `Update auth` silently breaks releases.
 
+## Deciding whether a change is breaking
+
+A change is breaking when correct, documented use of the project stops working, so users
+must change their code, configuration or data to upgrade. Examples: an endpoint, flag or
+field is removed or renamed; a default changes; a valid input is now refused.
+
+A bug fix is **not** breaking, even when someone may depend on the bug. If the code now does
+what it was always meant or documented to do, write `fix:` with no `!` and no
+`BREAKING CHANGE:` footer. Examples: expired tokens are now rejected, invalid input now
+returns an error, a wrong total is now correct. Release tools turn `!` into a new major
+version, and a major version for a security fix makes users wait longer to take the fix.
+If users need to know about the stricter behaviour, say so in the body.
+
 ## Choosing the type
 
 - Judge what the change does for a user of the project, not which files it touches.
@@ -69,7 +82,8 @@ commit to choose the next version. A title such as `Update auth` silently breaks
 1. Read the diff, or the description of the change.
 2. Pick the type. Add a scope when one area clearly owns the change.
 3. Write the description: an imperative verb first, lowercase, no period.
-4. Decide whether anything breaks for users. If it does, add `!` and a `BREAKING CHANGE:`
+4. Decide whether anything breaks for users, as "Deciding whether a change is breaking"
+   says. A bug fix is not breaking. If something breaks, add `!` and a `BREAKING CHANGE:`
    footer. (When you check someone else's message, either marker alone is enough.)
 5. Add a body only when the reason is not clear from the subject.
 6. Output only the commit message or title, as plain text without a code block, unless the

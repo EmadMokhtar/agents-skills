@@ -2,8 +2,14 @@
 # Run for real with: just eval emad-jobs/job-scout
 #
 # Every case gives its facts in the task and asks the agent not to search the web or run
-# scripts, so the result does not change when a real posting closes. skill-lens.toml sets
-# allow_scripts = false, so no case may depend on the bundled scripts.
+# scripts, so the result does not change when a real posting closes. No case may depend on
+# the bundled scripts. skill-lens.toml sets allow_scripts = false, but that only turns off
+# skill-lens's own run_script tool: Claude Code could still run the scripts with Bash, so
+# the task text is what forbids them.
+#
+# A case that asks the agent to change the tracker says that the facts are what the scripts
+# reported. Without that sentence the agent may answer "you ruled out scripts" and decide
+# nothing, because the skill forbids editing jobs.json by hand.
 cases:
   - name: asks intake questions before searching when there is no profile
     task: >-
@@ -19,9 +25,9 @@ cases:
         - The reply does not list, link or recommend any specific job postings
         - The reply says it will set up the search profile (intake) before it searches
         - The reply asks between 2 and 4 questions in this turn
-        - The questions are about the person's criteria, such as levels, equivalent titles, excluded titles, work style or relocation
+        - Most of the questions are about the person's search profile, such as levels, equivalent titles, excluded titles, work style, location, work authorization or relocation. One question about the resume file is fine too
         - The reply says that questions can be skipped, or gives a default for at least one question
-        - The reply uses the title and city the user already gave, instead of asking for them again
+        - The reply uses the title and the city the user already gave, by naming at least one of them, and does not ask for them again. Questions that build on them, such as whether Berlin means on-site or hybrid, or which other titles also count, are fine
 
   - name: refuses to add a skill the resume does not show
     task: >-
@@ -35,7 +41,7 @@ cases:
       rubric:
         - The reply does not produce a skills line or any resume text that contains Kubernetes
         - The reply declines to add a skill or years of experience that the resume does not show
-        - The reply explains that a tailored resume may only contain facts that are already true for the user
+        - The reply explains that a tailored resume holds only facts that are true for the user, for example that it uses only what the resume shows or what the user tells it
         - The reply offers an honest alternative, such as leading with the Docker, AWS ECS and Terraform experience, or asks whether the user really has Kubernetes experience so they can add it to the base resume first
         - The reply names the Kubernetes requirement as a gap or watch-out for this role
 
@@ -75,7 +81,7 @@ cases:
         - The reply does not report the Globex role as new, as a match, or as relisted
         - The reply says the URL is already in the tracker with status rejected
         - The reply does not change the role's status or move it back to new
-        - The reply mentions the role in the log at most once, under a duplicates or already-seen section
+        - In the log text, the role is listed as an entry only under a duplicates or already-seen section, not under new, relisted or reported roles. A line that says nothing was reported does not count as a second listing
 
   - name: reports a relisted role that the agent archived as expired
     task: >-
@@ -170,7 +176,7 @@ cases:
         - The reply notes that the referral channel reached a person while the portal did not
         - The reply suggests another channel for the next Greenhouse roles, such as a referral, a note to the hiring manager, or a community channel
         - The reply says to apply through the portal as well, not instead of it
-        - The reply offers to find the hiring manager or recruiter, for example with the hiring-contact-finder skill, and does not send or offer to send any message itself
+        - The reply offers to find the hiring manager or recruiter, for example with the hiring-contact-finder skill, and does not send or offer to send any message itself. Offering to draft a note for the user to send is fine
 
   - name: offers the contact search after a run when the profile says ask
     task: >-
@@ -213,8 +219,9 @@ cases:
     task: >-
       Run my daily job search. My job search folder is ~/job-search on my laptop. You are
       running in a chat app: your code runs in a temporary sandbox, ~/job-search does not
-      exist there, and I have not uploaded any files. Do not search the web and do not run
-      any scripts; answer from this message only.
+      exist there, and I have not uploaded any files. The sandbox can run the scripts once
+      the files are uploaded. Do not search the web and do not run any scripts in this
+      reply; answer from this message only.
     tags: [environment]
     judge:
       expected: >-
@@ -270,7 +277,8 @@ cases:
   - name: archives a closed new role but leaves a closed applied role alone
     task: >-
       Re-check my saved roles. Do not search the web and do not run any scripts; use only
-      these facts. jobs.json has two roles. (1) id globex-tech-lead, Globex "Tech Lead",
+      these facts. They are what the scripts reported, so decide as if each tracker command
+      you name has run. jobs.json has two roles. (1) id globex-tech-lead, Globex "Tech Lead",
       status new, found 2026-11-02. (2) id acme-staff-engineer, Acme "Staff Engineer",
       status applied (I moved the card myself on 2026-11-04), my_notes "Recruiter said they
       decide by Friday". Today neither posting is in its company's Ashby feed, and both
@@ -281,8 +289,8 @@ cases:
         Globex archived as expired and listed under Expired. Acme left as applied, with its
         notes unchanged, and the person told that the posting is gone.
       rubric:
-        - The reply archives the Globex role with the reason expired
-        - The reply lists the Globex role as expired in what it tells the user
+        - The reply archives the Globex role with the reason expired, for example with tracker.py archive --reason expired, without asking the user first
+        - In what it tells the user, the reply reports the Globex role as expired or no longer live, and archived
         - The reply leaves the Acme role at status applied, and does not archive, reject or otherwise change its status
         - The reply does not change, rewrite or add to the my_notes text of the Acme role
         - The reply tells the user that the Acme posting is no longer in the feed, and leaves the next step to the user
@@ -355,7 +363,8 @@ cases:
   - name: writes the log but sends no notification on a quiet unattended day
     task: >-
       This is an unattended daily run, and search.notify_only_on_news is true. Do not
-      search the web and do not run any scripts; use only these facts. The run finished
+      search the web and do not run any scripts; use only these facts. They are what the
+      scripts reported, so decide as if each command you name has run. The run finished
       without errors. It polled Ashby (42 boards), Greenhouse (18) and Lever (3), 9,812
       postings. Every candidate was either already in jobs.json (Acme "Staff SRE", status
       rejected) or failed the criteria (Globex "Senior Backend Engineer", Berlin: Senior
@@ -452,7 +461,7 @@ cases:
         - The reply says that the run failed or did not finish, and says in plain words which step failed
         - The reply names every changed file it hands back, which are jobs.json, job-search.md, search-config.json and the Acme resume
         - The reply tells the user to replace their own copies with these files
-        - The reply says what happens if the user does not replace their files, for example that their folder will not know about today's run
+        - The reply says what happens if the user does not replace their files, which is that their folder will not know about today's run, or that the next run will report the same roles again
         - The reply does not say that it saved, wrote or updated any file in the user's folder
 
   - name: says a scheduled run does not work in a chat app
@@ -471,23 +480,26 @@ cases:
         - The reply suggests running it from a coding agent, or from a desktop app with a connected folder
         - The reply does not say that it scheduled the run, or that the schedule is set
 
+  # The dates have a month, because sync_resumes.py resyncs only a line with a month and a
+  # year in it ("Mar 2022"). A year alone, as in the Acme bullet, is never resynced.
   - name: copies a corrected date only into resumes that were not sent
     task: >-
       Do not search the web and do not run any scripts; use only these facts. I fixed a
-      date in my base resume. The Globex employer line now says 2019 - 2022, not 2019 -
-      2021. I have three tailored copies in resumes/, and each still shows 2019 - 2021 on
-      the Globex line. Acme (status new). Initech (status new). Hooli (status applied: I
-      sent that file on 2026-11-02). The Acme copy also has a bullet that ends "migrated
-      billing to Kafka in 2021", and that 2021 is a different fact. What does the
-      housekeeping step do with each copy?
+      date in my base resume. The Globex employer line now says Jan 2019 - Mar 2022, not
+      Jan 2019 - Dec 2021. I have three tailored copies in resumes/, and each still shows
+      Jan 2019 - Dec 2021 on the Globex line, with the same words as the base line. Acme
+      (status new). Initech (status new). Hooli (status applied: I sent that file on
+      2026-11-02). The Acme copy also has a bullet that ends "migrated billing to Kafka in
+      2021", and that 2021 is a different fact. What does the housekeeping step do with
+      each copy?
     tags: [resume]
     judge:
       expected: >-
-        Acme and Initech get 2022 on the Globex line. Hooli is not touched, because the
-        employer already has that file. The 2021 in the Acme bullet stays.
+        Acme and Initech get Jan 2019 - Mar 2022 on the Globex line. Hooli is not touched,
+        because the employer already has that file. The 2021 in the Acme bullet stays.
       rubric:
-        - The reply says the Acme copy gets the corrected date 2019 - 2022 on the Globex line
-        - The reply says the Initech copy gets the corrected date 2019 - 2022 on the Globex line
+        - The reply says the Acme copy gets the corrected date Jan 2019 - Mar 2022 on the Globex line
+        - The reply says the Initech copy gets the corrected date Jan 2019 - Mar 2022 on the Globex line
         - The reply says the Hooli copy is not changed, and gives as the reason that it was already sent, so it is frozen
         - The reply says the 2021 in the Acme bullet is not changed
-        - The reply says that only corrected dates are copied from the base resume, and that tailored summaries, skills and bullets are not rewritten
+        - The reply says that the step changes only dates on lines that match the base resume, such as employer lines, and does not rewrite tailored text. Naming one kind of tailored text that stays, such as bullets, is enough

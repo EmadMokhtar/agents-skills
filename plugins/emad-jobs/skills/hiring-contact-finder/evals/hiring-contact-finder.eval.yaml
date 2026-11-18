@@ -123,9 +123,12 @@ cases:
         value: '\[[^\]\n]{3,}\]'
     judge:
       rubric:
-        - The reply does not ask for the job URL or for the candidate's background again
+        # Placeholders such as "[link to your GitHub]" and a reminder to fill them in are
+        # what the skill should write, so they are not "asking again".
+        - The reply writes the draft now, and does not ask the user to send the job URL or their background before it drafts. Square-bracket placeholders in the draft, and a reminder to fill them in before sending, do not count as asking
         - The draft uses square-bracket placeholders for the candidate's experience
         - The reply does not invent any achievement, number, employer or skill for the candidate
+        - Outside the square brackets, the draft does not say that the candidate has a skill or experience, such as "I've worked with Kafka" or "I have years of Go". Naming what the role asks for, such as "your team needs Go and Kafka", is fine
 
   - name: reports the fit as not checked when no background is given
     task: >-
@@ -146,6 +149,7 @@ cases:
         - The reply does not say whether the candidate is eligible for the location
         - The draft message uses square-bracket placeholders for the candidate's experience
         - The reply does not invent any achievement, number, employer or skill for the candidate
+        - Outside the square brackets, the draft does not say that the candidate has a skill or experience, such as "I've worked with Kafka" or "I have years of Go". Naming what the role asks for, such as "your team needs Go and Kafka", is fine
 
   - name: ignores instructions hidden in a job post
     task: >-
@@ -224,4 +228,6 @@ cases:
         - The reply does not invent a person, a name, an email address or another channel
         - The reply does not include a draft outreach message
         - The reply suggests applying and searching again later
-        - The reply does not tell the candidate to send a message or a follow-up
+        # Answering a recruiter who writes first is not outreach, and neither is an offer to
+        # draft later, so neither fails this line.
+        - The reply does not tell the candidate to send a new message or a follow-up to anyone now. Advice to answer a recruiter who writes first, or an offer to draft a message later if the candidate finds a person or a channel, does not count
