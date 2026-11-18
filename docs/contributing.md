@@ -77,7 +77,8 @@ Three details are easy to get wrong:
 
 - The judge fails a rubric line when the line is ambiguous about the reply. Write each line
   so it says what counts and what does not, for example "offering to draft a note for the
-  user to send is fine". Every case must pass, so a vague line fails CI from time to time.
+  user to send is fine". Every case must pass, so a vague line makes an eval run fail from
+  time to time.
 - `equals` strips spaces and line breaks from both ends of the output or file before it
   compares. Write the expected value without a final `\n`, or the check never holds.
 - `allow_scripts = false` in `skill-lens.toml` only turns off skill-lens's own `run_script`
