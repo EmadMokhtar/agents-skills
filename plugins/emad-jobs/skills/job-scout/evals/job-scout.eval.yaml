@@ -25,9 +25,9 @@ cases:
         - The reply does not list, link or recommend any specific job postings
         - The reply says it will set up the search profile (intake) before it searches
         - The reply asks between 2 and 4 questions in this turn
-        - The questions are about the person's criteria, such as levels, equivalent titles, excluded titles, work style or relocation
+        - Most of the questions are about the person's search profile, such as levels, equivalent titles, excluded titles, work style, location, work authorization or relocation. One question about the resume file is fine too
         - The reply says that questions can be skipped, or gives a default for at least one question
-        - The reply does not ask again for the title or the city the user already gave. Questions that build on them, such as whether Berlin means on-site or hybrid, or which other titles also count, are fine
+        - The reply uses the title and the city the user already gave, by naming at least one of them, and does not ask for them again. Questions that build on them, such as whether Berlin means on-site or hybrid, or which other titles also count, are fine
 
   - name: refuses to add a skill the resume does not show
     task: >-
@@ -461,7 +461,7 @@ cases:
         - The reply says that the run failed or did not finish, and says in plain words which step failed
         - The reply names every changed file it hands back, which are jobs.json, job-search.md, search-config.json and the Acme resume
         - The reply tells the user to replace their own copies with these files
-        - The reply says what happens if the user does not replace their files, for example that their folder will not know about today's run, or that the changes are lost when the sandbox is removed
+        - The reply says what happens if the user does not replace their files, which is that their folder will not know about today's run, or that the next run will report the same roles again
         - The reply does not say that it saved, wrote or updated any file in the user's folder
 
   - name: says a scheduled run does not work in a chat app
@@ -480,23 +480,26 @@ cases:
         - The reply suggests running it from a coding agent, or from a desktop app with a connected folder
         - The reply does not say that it scheduled the run, or that the schedule is set
 
+  # The dates have a month, because sync_resumes.py resyncs only a line with a month and a
+  # year in it ("Mar 2022"). A year alone, as in the Acme bullet, is never resynced.
   - name: copies a corrected date only into resumes that were not sent
     task: >-
       Do not search the web and do not run any scripts; use only these facts. I fixed a
-      date in my base resume. The Globex employer line now says 2019 - 2022, not 2019 -
-      2021. I have three tailored copies in resumes/, and each still shows 2019 - 2021 on
-      the Globex line. Acme (status new). Initech (status new). Hooli (status applied: I
-      sent that file on 2026-11-02). The Acme copy also has a bullet that ends "migrated
-      billing to Kafka in 2021", and that 2021 is a different fact. What does the
-      housekeeping step do with each copy?
+      date in my base resume. The Globex employer line now says Jan 2019 - Mar 2022, not
+      Jan 2019 - Dec 2021. I have three tailored copies in resumes/, and each still shows
+      Jan 2019 - Dec 2021 on the Globex line, with the same words as the base line. Acme
+      (status new). Initech (status new). Hooli (status applied: I sent that file on
+      2026-11-02). The Acme copy also has a bullet that ends "migrated billing to Kafka in
+      2021", and that 2021 is a different fact. What does the housekeeping step do with
+      each copy?
     tags: [resume]
     judge:
       expected: >-
-        Acme and Initech get 2022 on the Globex line. Hooli is not touched, because the
-        employer already has that file. The 2021 in the Acme bullet stays.
+        Acme and Initech get Jan 2019 - Mar 2022 on the Globex line. Hooli is not touched,
+        because the employer already has that file. The 2021 in the Acme bullet stays.
       rubric:
-        - The reply says the Acme copy gets the corrected date 2019 - 2022 on the Globex line
-        - The reply says the Initech copy gets the corrected date 2019 - 2022 on the Globex line
+        - The reply says the Acme copy gets the corrected date Jan 2019 - Mar 2022 on the Globex line
+        - The reply says the Initech copy gets the corrected date Jan 2019 - Mar 2022 on the Globex line
         - The reply says the Hooli copy is not changed, and gives as the reason that it was already sent, so it is frozen
         - The reply says the 2021 in the Acme bullet is not changed
-        - The reply says that the step changes only dates, and that it leaves the tailored summaries, skills and bullets as they are. Either statement on its own is enough, such as "it never edits bullets, summaries or skills"
+        - The reply says that the step changes only dates on lines that match the base resume, such as employer lines, and does not rewrite tailored text. Naming one kind of tailored text that stays, such as bullets, is enough

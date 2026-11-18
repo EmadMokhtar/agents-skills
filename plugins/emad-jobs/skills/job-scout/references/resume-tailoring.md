@@ -25,7 +25,7 @@ person: "The role asks for Kubernetes. Your resume does not mention it. If you h
 tell me how, and add it to your base resume first; I will not add it on my own." Put the gap
 in the role's watch-outs. Do not show an example line that contains the missing skill, such
 as "Kubernetes (2 years at X)": its years and employer are invented, and the person may copy
-it. Wait for their real facts.
+it. If they have the skill, they add it to the base resume first, and then you tailor again.
 
 `tailor_resume.py` also refuses any number that does not appear in the base resume. Do not
 work around it: ask the person.
