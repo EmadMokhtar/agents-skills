@@ -16,8 +16,10 @@ cases:
     assertions:
       - kind: file-produced
         file: justfile
+      # An empty folder has no Python project file, so it gets the native toolchain:
+      # plain git hooks, not pre-commit.
       - kind: file-produced
-        file: .pre-commit-config.yaml
+        file: .githooks/commit-msg
       - kind: file-produced
         file: AGENTS.md
       - kind: file-produced
@@ -66,15 +68,17 @@ cases:
         go.mod: "module example.com/my-cli\n\ngo 1.23\n"
         .github/workflows/test.yml: "name: test\non: push\njobs:\n  test:\n    runs-on: ubuntu-latest\n    steps:\n      - run: go test ./...\n"
     assertions:
+      # `equals` strips spaces and line breaks from both ends of the file before it
+      # compares, so the expected value has no final "\n".
       - kind: equals
         file: README.md
-        value: "# My CLI\n\nA tiny CLI that greets people.\n"
+        value: "# My CLI\n\nA tiny CLI that greets people."
       - kind: equals
         file: LICENSE
-        value: "My own licence text.\n"
+        value: "My own licence text."
       - kind: equals
         file: Makefile
-        value: "test:\n\tgo test ./...\n"
+        value: "test:\n\tgo test ./..."
       - kind: file-produced
         file: justfile
       - kind: file-produced
@@ -175,9 +179,10 @@ cases:
       - kind: not_contains
         file: docs/contributing.md
         value: RELEASE_TOKEN
+      # No final "\n": `equals` strips both ends of the file first.
       - kind: equals
         file: README.md
-        value: "# Kite\n\nA small TypeScript library.\n"
+        value: "# Kite\n\nA small TypeScript library."
     judge:
       rubric:
         - >-

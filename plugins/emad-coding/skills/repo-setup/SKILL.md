@@ -198,7 +198,9 @@ Keep it short. Include:
 - **Created / left alone / merged**: counts, and the names of the files left alone.
 - **Verification**: whether `just check` passed, and anything you could not run.
 - **The toolchain** you used, and what a contributor must install (`just` and the tools that
-  `just doctor` lists, or `uv` and `just`).
+  `just doctor` lists, or `uv` and `just`). With `native`, say by name that no
+  `pyproject.toml`, `uv.lock` or `.python-version` was added, so the user knows the
+  repository needs no Python.
 - **Assumptions** you made for values the user did not give, including the licence decision.
 - **The checklist of one-time GitHub settings**. The new `docs/contributing.md` already holds it,
   filled in for this repository. Add the commands from `references/github-settings.md` for the
