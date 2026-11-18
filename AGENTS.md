@@ -27,6 +27,19 @@ This repository holds Emad Mokhtar's agent skills, packaged as Agent Plugins 1.0
 - `README.md` in a skill folder is for people and is shown on the site. Use absolute links.
 - Add or update eval cases in `evals/` whenever the skill's behaviour changes.
 
+## Running evals and checks locally
+
+- `secret run CLAUDE_CODE_OAUTH_TOKEN -- just eval emad-jobs/job-scout` runs one skill's
+  evals. skill-lens gives Claude Code a temporary home (`product_sandbox = "auto"`), so it
+  cannot see the normal login. Without the token, every skill exits 2 before any case runs.
+  `secret` reads the token from the keychain and never prints it.
+- Never pass `--product-sandbox off` or set `product_sandbox = "off"` to avoid the token.
+  "off" gives Claude Code, started with `--dangerously-skip-permissions`, the real home
+  folder.
+- Never print the token, or write it into chat or a file.
+- In a new worktree, run `just install` before `just check`. Plain `uv run` skips the `docs`
+  group, so `just docs-build` fails with "Failed to spawn: mkdocs".
+
 ## Before you finish
 
 - Run `just check`. It must pass.
