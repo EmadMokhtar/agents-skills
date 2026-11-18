@@ -205,6 +205,16 @@ def test_release_package_must_bump_plugin_json(valid):
     assert problems_mentioning(find_problems(valid.root), "must update plugin.json")
 
 
+def test_release_package_must_bump_the_claude_manifest(valid):
+    edit_json(
+        valid.root / "release-please-config.json",
+        lambda d: d["packages"]["plugins/emad-alpha"]["extra-files"].pop(),
+    )
+    found = find_problems(valid.root)
+    assert problems_mentioning(found, "must update .claude-plugin/plugin.json")
+    assert not problems_mentioning(found, "must update plugin.json")
+
+
 def test_release_manifest_version_must_match_plugin_json(valid):
     edit_json(
         valid.root / ".release-please-manifest.json",

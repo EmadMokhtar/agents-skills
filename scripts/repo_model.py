@@ -2,7 +2,8 @@
 
 Every script and test reads the repository through this module, so the
 layout rules live in one place:
-- each plugin is a folder under plugins/ with a plugin.json file;
+- each plugin is a folder under plugins/ with a plugin.json file, and a
+  generated copy of it at .claude-plugin/plugin.json;
 - each skill is a folder exactly one level under plugins/<plugin>/skills/
   with a SKILL.md file (Agent Plugins 1.0.0, section 7.1).
 Names that start with "." (such as .DS_Store) are never plugins or skills.
@@ -31,8 +32,19 @@ SKILL_NAME_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 SKILL_NAME_MAX = 64
 RELEASE_CONFIG = "release-please-config.json"
 RELEASE_MANIFEST = ".release-please-manifest.json"
-# The release-please updater that bumps "version" inside each plugin.json.
+# The copy of plugin.json that Claude reads, relative to the plugin folder.
+# The Claude app (claude.ai, Claude Desktop, Cowork) needs it; Claude Code
+# also reads it. `just sync` writes it, so never edit it by hand.
+CLAUDE_MANIFEST = Path(".claude-plugin") / "plugin.json"
+# The release-please updaters that bump "version" in each plugin. A release
+# must bump the Claude copy too, or `just catalogs` fails after the release.
 VERSION_UPDATER = {"type": "json", "path": "plugin.json", "jsonpath": "$.version"}
+CLAUDE_VERSION_UPDATER = {
+    "type": "json",
+    "path": CLAUDE_MANIFEST.as_posix(),
+    "jsonpath": "$.version",
+}
+VERSION_UPDATERS = (VERSION_UPDATER, CLAUDE_VERSION_UPDATER)
 
 
 class RepoError(Exception):

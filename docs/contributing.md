@@ -58,13 +58,15 @@ just new-plugin emad-jobs "Job search skills: cover letters, outreach, and more.
 ```
 
 This writes `plugins/emad-jobs/plugin.json` at version `0.0.0` ("not released yet"). It also
-registers the plugin with release-please and regenerates both catalogs. Then:
+registers the plugin with release-please, regenerates both catalogs, and writes the copy at
+`plugins/emad-jobs/.claude-plugin/plugin.json` that the Claude app needs. Then:
 
 1. Add the plugin to the table in `README.md`.
 2. Add its first skill with `just new-skill`. A plugin without skills fails `just layout`.
 
-Never edit `.claude-plugin/marketplace.json` or `.agents/plugins/marketplace.json` by hand.
-Change `plugin.json` and run `just sync`.
+Never edit `.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`, or a
+plugin's `.claude-plugin/plugin.json` by hand. Change the plugin's root `plugin.json` and run
+`just sync`.
 
 ## Evals
 

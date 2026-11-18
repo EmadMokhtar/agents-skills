@@ -1,6 +1,7 @@
 # 0002. Follow Agent Plugins, and generate the client catalogs
 
-**Status:** Accepted
+**Status:** Accepted. The `.claude-plugin/plugin.json` part is superseded by
+[0004](0004-generate-a-claude-manifest-in-every-plugin.md)
 **Date:** 2026-10-05
 
 ## Context

@@ -3,7 +3,8 @@
 Run: just new-plugin <name> "<one-line description>"
 
 It writes plugins/<name>/plugin.json, registers the plugin with
-release-please, and regenerates both catalogs. Adding the plugin to the
+release-please, and regenerates both catalogs and the plugin's
+.claude-plugin/plugin.json copy. Adding the plugin to the
 README table stays a manual step, because that text is written for people.
 """
 
@@ -24,7 +25,7 @@ from repo_model import (
     REPO_URL,
     SCHEMA_ID,
     SITE_URL,
-    VERSION_UPDATER,
+    VERSION_UPDATERS,
     write_json,
 )
 from sync_catalogs import write_catalogs
@@ -70,7 +71,7 @@ def create_plugin(root: Path, name: str, description: str) -> Path:
     )
     key = f"plugins/{name}"
     packages = config.setdefault("packages", {})
-    packages[key] = {"component": name, "extra-files": [dict(VERSION_UPDATER)]}
+    packages[key] = {"component": name, "extra-files": [dict(u) for u in VERSION_UPDATERS]}
     config["packages"] = dict(sorted(packages.items()))
     versions[key] = INITIAL_VERSION
     write_json(config_path, config)

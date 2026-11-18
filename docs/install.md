@@ -21,6 +21,15 @@ From a terminal, the same commands are `claude plugin marketplace add ...` and
 `/emad-coding:conventional-commits`. Claude also loads a skill by itself when a task matches
 its description.
 
+## Claude app (claude.ai, Claude Desktop, Cowork)
+
+1. Open **Customize**, then **Plugins**.
+2. Choose **Add**, then **Add marketplace**, and enter `EmadMokhtar/agents-skills`.
+3. Install the plugins you want from the marketplace list.
+
+The app installs a plugin on your Claude account. The plugin also appears in Claude Code as a
+synced plugin, so you do not need to install it there again.
+
 ## GitHub Copilot CLI
 
 Install one plugin straight from its folder:

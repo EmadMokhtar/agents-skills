@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import yaml
 
-from repo_model import RELEASE_CONFIG, RELEASE_MANIFEST, SCHEMA_ID, VERSION_UPDATER
+from repo_model import RELEASE_CONFIG, RELEASE_MANIFEST, SCHEMA_ID, VERSION_UPDATERS
 
 
 class FakeRepo:
@@ -50,7 +50,7 @@ class FakeRepo:
         config = self._read_json(RELEASE_CONFIG)
         config["packages"][f"plugins/{name}"] = {
             "component": name,
-            "extra-files": [dict(VERSION_UPDATER)],
+            "extra-files": [dict(u) for u in VERSION_UPDATERS],
         }
         self._write_json(RELEASE_CONFIG, config)
         versions = self._read_json(RELEASE_MANIFEST)

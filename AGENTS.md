@@ -5,8 +5,9 @@ This repository holds Emad Mokhtar's agent skills, packaged as Agent Plugins 1.0
 
 ## Layout rules
 
-- Each plugin is `plugins/emad-<category>/` with a root `plugin.json`. Never add
-  `.claude-plugin/plugin.json` inside a plugin.
+- Each plugin is `plugins/emad-<category>/` with a root `plugin.json`. Edit only that file.
+  `just sync` copies it to the plugin's `.claude-plugin/plugin.json`, which the Claude app
+  needs. Never edit that copy by hand.
 - Each skill is `plugins/<plugin>/skills/<skill>/SKILL.md`: exactly one level under `skills/`,
   never deeper.
 - Skill names are unique across all plugins.

@@ -22,6 +22,9 @@ Claude Code:
 /plugin install emad-coding@emad-skills
 ```
 
+Claude app (claude.ai, Claude Desktop, Cowork): open **Customize**, then **Plugins**, choose
+**Add**, then **Add marketplace**, and enter `EmadMokhtar/agents-skills`.
+
 GitHub Copilot CLI:
 
 ```bash
