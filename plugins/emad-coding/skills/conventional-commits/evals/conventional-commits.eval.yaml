@@ -17,8 +17,11 @@ cases:
       Change: token refresh accepted expired tokens; now it rejects them.
     tags: [format]
     assertions:
+      # A bug fix is not a breaking change: no "!" in the subject and no footer.
       - kind: regex
         value: '\Afix(\([a-z0-9._-]+\))?: [a-z]'
+      - kind: not_contains
+        value: "BREAKING CHANGE"
       - kind: regex
         value: '\A(?![^\n]*\.[ \t]*(?:\n|\Z))'
   - name: breaking change has an exclamation mark and a footer

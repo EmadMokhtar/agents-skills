@@ -16,7 +16,7 @@ security from the first day. It works for any language.
 
 | Module | What it adds |
 | --- | --- |
-| `base` | README, licence, pre-commit hooks (file hygiene, secret scan, commit-message check), a `justfile`, CI, a pull request title check, Dependabot, and a contributing guide |
+| `base` | README, licence, git hooks (file hygiene, secret scan, commit-message check: plain `.githooks/` scripts, or pre-commit in a Python repository), a `justfile`, CI, a pull request title check, Dependabot, and a contributing guide |
 | `release` | Releases with commitizen: version, changelog, tag and GitHub Release. Left out when the repository already has a release tool. |
 | `agents` | `AGENTS.md`, `CLAUDE.md` and Copilot review rules |
 | `adr` | Decision records: a template, an index and five starter records |

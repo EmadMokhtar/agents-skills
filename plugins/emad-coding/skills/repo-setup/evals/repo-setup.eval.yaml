@@ -223,3 +223,31 @@ cases:
           The response says that a contributor needs just and a few small tools (which just doctor
           lists), and does not say they need uv or Python.
         - The response says that no pyproject.toml, uv.lock or .python-version was added.
+  - name: a Python repository gets the uv toolchain
+    task: >-
+      This is a new Python command line tool. Set the repo up like PyFR with the base module
+      only. Name: Ledger. Slug: ledger. Description: Keeps a small ledger. Owner:
+      EmadMokhtar. Author: Emad Mokhtar. Branch: main. Licence: MIT. Do not ask questions. Do
+      not run git or network commands.
+    tags: [toolchain]
+    workspace:
+      files:
+        requirements.txt: "requests==2.32.3\n"
+        src/ledger/main.py: "print(\"ledger\")\n"
+    assertions:
+      # requirements.txt is a Python project file, so --toolchain auto picks uv.
+      - kind: file-produced
+        file: pyproject.toml
+      - kind: file-produced
+        file: .pre-commit-config.yaml
+      - kind: file-produced
+        file: .python-version
+      - kind: contains
+        file: justfile
+        value: uv run
+      - kind: contains
+        file: .github/workflows/ci.yml
+        value: setup-uv
+      - kind: equals
+        file: requirements.txt
+        value: "requests==2.32.3"
