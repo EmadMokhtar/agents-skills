@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/EmadMokhtar/agents-skills/compare/emad-jobs-v0.2.0...emad-jobs-v0.2.1) (2026-11-18)
+
+
+### Bug Fixes
+
+* generate the .claude-plugin/plugin.json manifest that the claude app needs ([#16](https://github.com/EmadMokhtar/agents-skills/issues/16)) ([eb1143c](https://github.com/EmadMokhtar/agents-skills/commit/eb1143c963e60b16d57d3f6939ebef162d45ca5e))
+
 ## [0.2.0](https://github.com/EmadMokhtar/agents-skills/compare/emad-jobs-v0.1.0...emad-jobs-v0.2.0) (2026-11-18)
 
 
